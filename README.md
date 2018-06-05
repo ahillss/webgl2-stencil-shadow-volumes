@@ -9,6 +9,7 @@ Original idea was based off [Mikola Lysneko's implementation](https://github.com
 * runs on the gpu instead of cpu
 * front and back face extruded shadow volumes
 * zpass and zfail
+* works on meshes with holes
 
 ## Controls
 
