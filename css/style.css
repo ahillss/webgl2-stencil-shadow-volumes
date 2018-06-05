@@ -1,0 +1,39 @@
+#bar {
+    width:800px;
+    background-color: #dedede;
+    font-family: "Tahoma,Arial";
+    font-size: 12pt;
+    white-space: normal;
+    font-weight: normal;
+	
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+#barTime {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+#barFps {
+    display: table-cell;
+    vertical-align: middle;
+    width: 100%;
+    white-space: nowrap;
+}
+
+canvas {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+pre {
+    white-space: pre-wrap;
+}
+
+#log {
+    font-family: "Courier New";
+    font-size: 10pt;
+}
