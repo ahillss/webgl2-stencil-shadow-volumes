@@ -508,7 +508,7 @@ function onRender(curTime) {
     uniform1f(gl,"u_strength",0.25);
 
     //view
-    var viewMat=cameraControl.getView();
+    viewMat=cameraControl.getView();
 
     //ground
     mat4.identity(scene.ground.modelMat);
@@ -699,6 +699,7 @@ function onAnimate() {
 function registerInputEvents(element) {
     (function(){
         var lmb=false;
+        
 
         window.addEventListener("keydown", (function(event){
             cameraControl.keydown(event);
@@ -712,18 +713,28 @@ function registerInputEvents(element) {
 
         element.addEventListener('mousemove', function(event) {
             if(PL.isEnabled() || (!PL.isSupported && lmb)) {
-                cameraControl.mousemove(event);
-            } else if(event.ctrlKey) {
-                                
-                var aaa=mat4.create();
-                mat4.identity(aaa);
-                                
-                mat4.rotateY(aaa,aaa,event.movementX*0.01);
-                mat4.rotateX(aaa,aaa,event.movementY*0.01);
-                
-                mat4.multiply(blaMat,aaa,blaMat);
-                
+                if(!event.ctrlKey) {
+                    cameraControl.mousemove(event);
+                } else {
+                                    
+                    //var aaa=mat4.clone(viewMat);
+                    ////mat4.copy(aaa,viewMat);
+                    //aaa[12]=aaa[13]=aaa[14]=0.0;
+                    //mat4.transpose(aaa,aaa);
+                    //mat4.rotateY(aaa,aaa,event.movementX*0.01);
+                    //mat4.rotateX(aaa,aaa,event.movementY*0.01);
+                    
+                    var aaa=mat4.create();
+                    mat4.identity(aaa);
+                    mat4.rotate(aaa, aaa, event.movementY*0.01, [viewMat[0],viewMat[4],viewMat[8]])  ;
+                    mat4.rotate(aaa, aaa, event.movementX*0.01, [viewMat[1],viewMat[5],viewMat[9]])  ;    
+                    
+                    mat4.multiply(blaMat,aaa,blaMat);
+                    
+                }
             }
+            
+
         }, false);
 
         element.addEventListener("mousedown",function(event){
@@ -731,7 +742,7 @@ function registerInputEvents(element) {
                 lmb=true;
                 if(PL.isEnabled()) {
                     PL.exitPointerLock();
-                } else if(  !event.ctrlKey){
+                } else {
                     PL.requestPointerLock(element);
                 }
             }
@@ -740,7 +751,7 @@ function registerInputEvents(element) {
         window.addEventListener("mouseup",function(event){
             if(event.button==0&&lmb){
                 lmb=false;
-                //  PL.exitPointerLock();
+                  PL.exitPointerLock();
             }
         });
     })();

@@ -7,8 +7,7 @@ Original idea was from [Mikola Lysneko's implementation](https://github.com/stac
 ## Features
 * point light
 * runs on the gpu instead of cpu
-* front and back face extruded shadow volumes
-* zpass and zfail
+* can do zpass/zfail, back/front faced shadows
 * works on meshes with holes
 
 ## Controls
@@ -16,8 +15,7 @@ Original idea was from [Mikola Lysneko's implementation](https://github.com/stac
 * w/d to move forward/backward
 * a/d to strafe
 * q/e to move up/down
-* mouse click to enable mouse look
-* hold down control to rotate the model
+* hold left mouse down to look around, also hold down ctrl while doing this to spin the model
 
 ## TODO
 
