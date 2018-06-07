@@ -2,7 +2,7 @@
 
 [Demo](http://andrewhills.github.io/webgl-stencil-shadow-volumes/demo.html) (requires WebGL2).
 
-Original idea was from [Mikola Lysneko's implementation](https://github.com/stackgl/webgl-workshop/tree/master/exercises/stencil-shadows), and was implemented by following the general algorithm described in [GPU Gems 3, chapter 11](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch11.html).
+Original idea was from [Mikola Lysneko's implementation](https://github.com/stackgl/webgl-workshop/tree/master/exercises/stencil-shadows), and was implemented using the general algorithm described in [GPU Gems 3, chapter 11](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch11.html).
 
 ## Features
 * point light
