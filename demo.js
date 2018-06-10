@@ -29,7 +29,7 @@ var groundMtrl={"shininess" : 128,  "color" : [1.0,1.0,1.0]};
 var calcFPS=createFpsCounter();
 
 
-var cameraControl=createFreeLookCameraControl5({"pos":[0,2,14],"yaw":0,"pitch":0,"speed":50,"slow":5,"lookSpeed":0.005});
+var cameraControl=createFreeLookCameraControl5({"pos":[0,8,14],"yaw":0,"pitch":-0.4,"speed":50,"slow":5,"lookSpeed":0.005});
 
 
 function setErrorMsg(msg) {
@@ -107,10 +107,10 @@ function initMenu() {
         "cameraPitch":0.5,
         "cameraDist":15,
         "lightX":-1,
-        "lightY":4.5,
+        "lightY":6,
         "lightZ":2,
-        "groundY":0,
-        "groundScale":1,
+        "groundY":-3,
+        "groundScale":1.4,
         "groundVisible":true,
         "disableShadows":false,
     };
@@ -123,10 +123,10 @@ function initMenu() {
     f1.add(mymenu, 'shadowDebugVolume').name('show volume');
     f1.add(mymenu, 'shadowDebugWireframe').name('show wireframe');
     f1.add(mymenu, 'disableShadows').name('disable shadows');
-   
+
     var f3 = gui.addFolder('Light');
     f3.add(mymenu, 'lightX', -5, 5).name('x');
-    f3.add(mymenu, 'lightY', 0, 10).name('y');
+    f3.add(mymenu, 'lightY', 0, 15).name('y');
     f3.add(mymenu, 'lightZ', -5, 5).name('z');
 
     var f4 = gui.addFolder('Ground');
@@ -200,15 +200,11 @@ function onInit2() {
     },log);
 
 
-
     //
 
     loadTexture2d(gl,"models/grid.png",gl.RGB, gl.RGB, gl.UNSIGNED_BYTE,false,true,true).then(function(tex) {
         groundMtrl.colTex=tex;
     },log);
-
-
-
 
     //
     getProgram(gl,"shaders/shdvoledge.vs","shaders/shdvol.fs").then(function(prog) {shadowEdgeProg=prog;},log);
@@ -354,8 +350,8 @@ function drawObjectDepth(obj,mesh) {
 
 
 
-    //    
-  
+    //
+
     uniformMatrix4fv(gl,"u_modelMat",false,obj.modelMat);
 
     uniformsApply(gl,simpleProg);
@@ -522,7 +518,7 @@ function onRender(curTime) {
     mat4.translate(scene.teapot.modelMat,scene.teapot.modelMat, vec3.fromValues(0,2,0));
     mat4.scale(scene.teapot.modelMat,scene.teapot.modelMat, vec3.fromValues(1,1,1));
 
-mat4.multiply(scene.teapot.modelMat,scene.teapot.modelMat,blaMat);
+    mat4.multiply(scene.teapot.modelMat,scene.teapot.modelMat,blaMat);
     if(mymenu.sceneAnimate) {
         //~ mat4.rotateY(scene.teapot.modelMat,scene.teapot.modelMat,curTime);
     }
@@ -540,19 +536,19 @@ mat4.multiply(scene.teapot.modelMat,scene.teapot.modelMat,blaMat);
     calcObjTransform(scene.teapot,projMat,infProjMat,viewMat);
     calcObjTransform(scene.ground,projMat,infProjMat,viewMat);
     calcObjTransform(scene.light,projMat,infProjMat,viewMat);
-    
+
     mat4.multiply(viewProjMat,projMat,viewMat);
     mat4.multiply(viewInfProjMat,infProjMat,viewMat);
-    
+
 
     //
-        uniformMatrix4fv(gl,"u_projMat",false,infProjMat);
-        uniformMatrix4fv(gl,"u_viewProjMat",false,viewInfProjMat);
+    uniformMatrix4fv(gl,"u_projMat",false,infProjMat);
+    uniformMatrix4fv(gl,"u_viewProjMat",false,viewInfProjMat);
 
 
 
     uniform1i(gl,"u_useBack",(mymenu.shadowFace=='back')?1:0);
-    
+
 
     //
 
@@ -650,11 +646,11 @@ function log(msg) {
 }
 
 //~ var getTime=(function(){
-    //~ var start;
-    //~ return (()=>{
-        //~ start=start||Date.now();
-        //~ return ((Date.now()-start)/1000)%3.402823e+38;
-    //~ });
+//~ var start;
+//~ return (()=>{
+//~ start=start||Date.now();
+//~ return ((Date.now()-start)/1000)%3.402823e+38;
+//~ });
 //~ })();
 
 
@@ -698,7 +694,7 @@ function onAnimate() {
 function registerInputEvents(element) {
     (function(){
         var lmb=false;
-        
+
 
         window.addEventListener("keydown", (function(event){
             cameraControl.keydown(event);
@@ -715,24 +711,24 @@ function registerInputEvents(element) {
                 if(!event.ctrlKey) {
                     cameraControl.mousemove(event);
                 } else {
-                                    
+
                     //var aaa=mat4.clone(viewMat);
                     ////mat4.copy(aaa,viewMat);
                     //aaa[12]=aaa[13]=aaa[14]=0.0;
                     //mat4.transpose(aaa,aaa);
                     //mat4.rotateY(aaa,aaa,event.movementX*0.01);
                     //mat4.rotateX(aaa,aaa,event.movementY*0.01);
-                    
+
                     var aaa=mat4.create();
                     mat4.identity(aaa);
                     mat4.rotate(aaa, aaa, event.movementY*0.01, [viewMat[0],viewMat[4],viewMat[8]])  ;
-                    mat4.rotate(aaa, aaa, event.movementX*0.01, [viewMat[1],viewMat[5],viewMat[9]])  ;    
-                    
+                    mat4.rotate(aaa, aaa, event.movementX*0.01, [viewMat[1],viewMat[5],viewMat[9]])  ;
+
                     mat4.multiply(blaMat,aaa,blaMat);
-                    
+
                 }
             }
-            
+
 
         }, false);
 
@@ -750,7 +746,7 @@ function registerInputEvents(element) {
         window.addEventListener("mouseup",function(event){
             if(event.button==0&&lmb){
                 lmb=false;
-                  PL.exitPointerLock();
+                PL.exitPointerLock();
             }
         });
     })();
@@ -788,15 +784,15 @@ function doShadowMesh(verts,inds) {
 
 
     return {
-            "capVao":capVao,"capVertsNum":capVerts[0].length/3,"capIndsNum":capVerts[3].length,
-            "capLinesVao":capLinesVao,"capLinesIndsNum":capVerts[4].length,
-            "sideVao":sideVao,"sideIndsNum":result3[4].length,
-            "sideLinesVao":sideLinesVao,"sideLinesIndsNum":result3[5].length,
-           };
+        "capVao":capVao,"capVertsNum":capVerts[0].length/3,"capIndsNum":capVerts[3].length,
+        "capLinesVao":capLinesVao,"capLinesIndsNum":capVerts[4].length,
+        "sideVao":sideVao,"sideIndsNum":result3[4].length,
+        "sideLinesVao":sideLinesVao,"sideLinesIndsNum":result3[5].length,
+    };
 }
 
 
-function drawShadowCapsAltWireframe(obj,mesh) {
+function drawShadowCapsWireframe(obj,mesh) {
     if(!mesh || !shadowCapProg) {
         return;
     }
@@ -811,7 +807,7 @@ function drawShadowCapsAltWireframe(obj,mesh) {
 
 }
 
-function drawShadowSidesAltWireframe(obj,mesh) {
+function drawShadowSidesWireframe(obj,mesh) {
     if(!mesh || !shadowEdgeProg) {
         return;
     }
@@ -827,7 +823,7 @@ function drawShadowSidesAltWireframe(obj,mesh) {
 }
 
 
-function drawShadowCapsAlt(obj,mesh) {
+function drawShadowCaps(obj,mesh) {
     if(!mesh || !shadowCapProg) {
         return;
     }
@@ -840,7 +836,7 @@ function drawShadowCapsAlt(obj,mesh) {
     gl.drawElements(gl.TRIANGLES, mesh.capIndsNum, gl.UNSIGNED_INT, 0);
 }
 
-function drawShadowSidesAlt(obj,mesh) {
+function drawShadowSides(obj,mesh) {
     if(!mesh || !shadowEdgeProg) {
         return;
     }
@@ -860,14 +856,14 @@ function drawShadow(obj,mesh) {
 
     uniformMatrix4fv(gl,"u_modelViewMat",false,obj.modelViewMat);
     uniformMatrix4fv(gl,"u_modelMat",false,obj.modelMat);
-    
+
     uniform4f(gl,"u_col",1,1,1,0.1);
 
     if(mymenu.shadowZ=='fail') {
-        drawShadowCapsAlt(obj,mesh);
+        drawShadowCaps(obj,mesh);
     }
 
-    drawShadowSidesAlt(obj,mesh);
+    drawShadowSides(obj,mesh);
 
 
 
@@ -889,15 +885,15 @@ function drawShadowWireframe(obj,mesh) {
     if(mymenu.shadowZ=='fail') {
         uniform4f(gl,"u_col",1,1,0,1);
 
-            drawShadowCapsAltWireframe(obj,mesh) ;
+        drawShadowCapsWireframe(obj,mesh) ;
 
 
     }
-    
-    
-        uniform4f(gl,"u_col",0,1,1,1);
 
-        drawShadowSidesAltWireframe(obj,mesh);
+
+    uniform4f(gl,"u_col",0,1,1,1);
+
+    drawShadowSidesWireframe(obj,mesh);
 
     gl.bindVertexArray(null);
 
