@@ -3,7 +3,7 @@ var gl;
 var canvas;
 var mymenu;
 
-var simpleProg,billboardProg,lightProg,lightcProg,ambientProg,ambientcProg,shadowEdgeProg,shadowCapProg;
+var simpleProg,billboardProg,lightProg,ambientProg,shadowEdgeProg,shadowCapProg;
 
 
 var projMat=mat4.create();
@@ -211,11 +211,9 @@ function onInit2() {
     getProgram(gl,"shaders/shdvolcap.vs","shaders/shdvol.fs").then(function(prog) {shadowCapProg=prog;},log);
 
     getProgram(gl,"shaders/light.vs","shaders/light.fs").then(function(prog) {lightProg=prog;},log);
-    getProgram(gl,"shaders/light_wtex.vs","shaders/light_wtex.fs").then(function(prog) {lightcProg=prog;},log);
     getProgram(gl,"shaders/simple.vs","shaders/white.fs").then(function(prog) {simpleProg=prog;},log);
     getProgram(gl,"shaders/billboard.vs","shaders/billboard.fs").then(function(prog) {billboardProg=prog;},log);
     getProgram(gl,"shaders/ambient.vs","shaders/ambient.fs").then(function(prog) {ambientProg=prog;},log);
-    getProgram(gl,"shaders/ambient_wtex.vs","shaders/ambient_wtex.fs").then(function(prog) {ambientcProg=prog;},log);
 
     //
     uniform3f(gl,"u_lightAtten",0.9,0.1,0.01);
@@ -362,22 +360,14 @@ function drawObjectDepth(obj,mesh) {
 }
 
 function drawObjectLit(obj,mesh,mtrl) {
-    if(!mesh) {
+    if(!mesh || !lightProg) {
         return;
     }
 
     //
-    var prog;
 
-    if(lightcProg && mtrl && mtrl.colTex!=undefined) {
-        prog=lightcProg;
-    } else if(lightProg){
-        prog=lightProg;
-    } else {
-        return;
-    }
 
-    gl.useProgram(prog);
+    gl.useProgram(lightProg);
 
     //
     if(mtrl && mtrl.colTex!=undefined) {
@@ -401,9 +391,10 @@ function drawObjectLit(obj,mesh,mtrl) {
     uniform1f(gl,"u_shininess",shininess);
 
     uniform3fv(gl,"u_materialCol",col);
+    uniform1i(gl,"u_useTexture",(mtrl && mtrl.colTex!=undefined)?1:0);
 
     //
-    uniformsApply(gl,prog);
+    uniformsApply(gl,lightProg);
 
     //
     gl.drawElements(gl.TRIANGLES, mesh.indsNum, gl.UNSIGNED_INT, 0);
@@ -413,24 +404,11 @@ function drawObjectLit(obj,mesh,mtrl) {
 }
 
 function drawObjectAmbient(obj,mesh,mtrl) {
-    if(!mesh) {
+    if(!mesh || !ambientProg) {
         return;
     }
 
-    //
-    var prog;
-
-    if(ambientcProg && mtrl && mtrl.colTex!=undefined) {
-        prog=ambientcProg;
-    }else if(ambientProg) {
-        prog=ambientProg;
-    } else {
-        return;
-    }
-
-
-
-    gl.useProgram(prog);
+    gl.useProgram(ambientProg);
 
     //
     if(mtrl&&mtrl.colTex!=undefined) {
@@ -447,9 +425,10 @@ function drawObjectAmbient(obj,mesh,mtrl) {
     //
     uniformMatrix4fv(gl,"u_modelMat",false,obj.modelMat);
     uniform3fv(gl,"u_materialCol",col);
+    uniform1i(gl,"u_useTexture",(mtrl && mtrl.colTex!=undefined)?1:0);
 
     //
-    uniformsApply(gl,prog);
+    uniformsApply(gl,ambientProg);
 
     //
     gl.drawElements(gl.TRIANGLES, mesh.indsNum, gl.UNSIGNED_INT, 0);
