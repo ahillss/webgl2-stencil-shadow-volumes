@@ -36,8 +36,17 @@ void main() {
 
     vec3 nor=calcTriNor(vert0,vert1,vert2);
     
+    int type=gl_VertexID%2;
+    
     if(isFaceLit(vert0,vert1,vert2,nor)) {
-        gl_Position=u_viewProjMat*vec4(vert0,1.0);
+        if(type==0) {
+            gl_Position=u_viewProjMat*vec4(vert0,1.0);
+        } else {
+            vec3 L=normalize(vert0-u_lightPos);
+            vec4 v=vec4(L,0.0);
+            gl_Position=u_viewProjMat*v;
+        }
+        
     } else {
         gl_Position=vec4(0.0);
     }

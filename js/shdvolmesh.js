@@ -174,8 +174,10 @@ function generateSideVertsInds(verts,inds) {
         indsOut.push(...[i*4+0,i*4+2,i*4+1, i*4+1,i*4+2,i*4+3]);
         lineIndsOut.push(...[i*4+0,i*4+2, i*4+1,i*4+3]);
     }
+    
+    var out=[edgeVerts0Out,edgeVerts1Out,halfEdges0Out,halfEdges1Out,indsOut,lineIndsOut];
         
-    return [edgeVerts0Out,edgeVerts1Out,halfEdges0Out,halfEdges1Out,indsOut,lineIndsOut];
+    return out;
     
 }
 
@@ -195,30 +197,35 @@ function generateCapVerts(verts,inds) {
         var vert1=[verts[ind1*3+0],verts[ind1*3+1],verts[ind1*3+2]];
         var vert2=[verts[ind2*3+0],verts[ind2*3+1],verts[ind2*3+2]];
         
-        var indStart=verts0Out.length/3;
-                
-        verts0Out.push(...vert0);
-        verts0Out.push(...vert1);
-        verts0Out.push(...vert2);
-        
-        verts1Out.push(...vert1);
-        verts1Out.push(...vert2);
-        verts1Out.push(...vert0);
-        
-        verts2Out.push(...vert2);
-        verts2Out.push(...vert0);
-        verts2Out.push(...vert1);
-        
-        
+        for(var j=0;j<2;j++) {
+            verts0Out.push(...vert0);
+            verts1Out.push(...vert1);
+            verts2Out.push(...vert2);
+        }
+            
+        for(var j=0;j<2;j++) {
+            verts0Out.push(...vert1);
+            verts1Out.push(...vert2);
+            verts2Out.push(...vert0);
+        }
+            
+        for(var j=0;j<2;j++) {
+            verts0Out.push(...vert2);
+            verts1Out.push(...vert0);
+            verts2Out.push(...vert1);
+        }
     }
-    
-    var indsOutLen=indsOut.length;
     
     for(var i=0;i<inds.length/3;i++) {
-        var indStart=i*3;
-        //indsOut.push(...[indStart+0,indStart+1,indStart+2]);
-        lineIndsOut.push(...[indStart+0,indStart+1, indStart+1,indStart+2, indStart+2,indStart+0]);
+        indsOut.push(...([i*3+0,i*3+1,i*3+2].map(x=>x*2+0)));
+        lineIndsOut.push(...([i*3+0,i*3+1, i*3+1,i*3+2, i*3+2,i*3+0].map(x=>x*2+0)));
     }
 
-    return [verts0Out,verts1Out,verts2Out,indsOut,lineIndsOut];
+    for(var i=0;i<inds.length/3;i++) {
+        indsOut.push(...([i*3+2,i*3+1,i*3+0].map(x=>x*2+1)));
+        lineIndsOut.push(...([i*3+0,i*3+1, i*3+1,i*3+2, i*3+2,i*3+0].map(x=>x*2+1)));
+    }
+    
+    var out=[verts0Out,verts1Out,verts2Out,indsOut,lineIndsOut];
+    return out;
 }

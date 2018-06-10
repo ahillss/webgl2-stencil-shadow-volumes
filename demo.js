@@ -3,7 +3,7 @@ var gl;
 var canvas;
 var mymenu;
 
-var simpleProg,billboardProg,lightProg,lightcProg,ambientProg,ambientcProg,shadowFrontProg,shadowBackProg,shadowSideProg;
+var simpleProg,billboardProg,lightProg,lightcProg,ambientProg,ambientcProg,shadowEdgeProg,shadowCapProg;
 
 
 var projMat=mat4.create();
@@ -211,9 +211,8 @@ function onInit2() {
 
 
     //
-    getProgram(gl,"shaders/shadowSide.vs","shaders/shadow.fs").then(function(prog) {shadowSideProg=prog;},log);
-    getProgram(gl,"shaders/shadowFront.vs","shaders/shadow.fs").then(function(prog) {shadowFrontProg=prog;},log);
-    getProgram(gl,"shaders/shadowBack.vs","shaders/shadow.fs").then(function(prog) {shadowBackProg=prog;},log);
+    getProgram(gl,"shaders/shdvoledge.vs","shaders/shdvol.fs").then(function(prog) {shadowEdgeProg=prog;},log);
+    getProgram(gl,"shaders/shdvolcap.vs","shaders/shdvol.fs").then(function(prog) {shadowCapProg=prog;},log);
 
     getProgram(gl,"shaders/light.vs","shaders/light.fs").then(function(prog) {lightProg=prog;},log);
     getProgram(gl,"shaders/light_wtex.vs","shaders/light_wtex.fs").then(function(prog) {lightcProg=prog;},log);
@@ -779,7 +778,7 @@ function doShadowMesh(verts,inds) {
 
     var cleanedGeometry=cleanVertsInds(verts,inds)
     var capVerts=generateCapVerts(cleanedGeometry.vertices,cleanedGeometry.indices);
-    var capVao=createGeometry([0,3,capVerts[0]],[1,3,capVerts[1]],[2,3,capVerts[2]],null);
+    var capVao=createGeometry([0,3,capVerts[0]],[1,3,capVerts[1]],[2,3,capVerts[2]],capVerts[3]);
     var capLinesVao=createGeometry([0,3,capVerts[0]],[1,3,capVerts[1]],[2,3,capVerts[2]],capVerts[4]);
 
     var result3=generateSideVertsInds(cleanedGeometry.vertices,cleanedGeometry.indices);
@@ -789,7 +788,7 @@ function doShadowMesh(verts,inds) {
 
 
     return {
-            "capVao":capVao,"capVertsNum":capVerts[0].length/3,
+            "capVao":capVao,"capVertsNum":capVerts[0].length/3,"capIndsNum":capVerts[3].length,
             "capLinesVao":capLinesVao,"capLinesIndsNum":capVerts[4].length,
             "sideVao":sideVao,"sideIndsNum":result3[4].length,
             "sideLinesVao":sideLinesVao,"sideLinesIndsNum":result3[5].length,
@@ -798,107 +797,77 @@ function doShadowMesh(verts,inds) {
 
 
 function drawShadowCapsAltWireframe(obj,mesh) {
-    if(!mesh || !shadowFrontProg || !shadowBackProg) {
+    if(!mesh || !shadowCapProg) {
         return;
     }
 
     //
     gl.bindVertexArray(mesh.capLinesVao);
 
-
-    setDrawStates(gl,false,{
-        "front_face":gl.CW
-    });
-
-    gl.useProgram(shadowBackProg);
-    uniformsApply(gl,shadowBackProg);
+    gl.useProgram(shadowCapProg);
+    uniformsApply(gl,shadowCapProg);
     gl.drawElements(gl.LINES, mesh.capLinesIndsNum, gl.UNSIGNED_INT, 0);
 
-    setDrawStates(gl,false,{
-        "front_face":gl.CCW
-    });
-
-    gl.useProgram(shadowFrontProg);
-    uniformsApply(gl,shadowFrontProg);
-
-    gl.drawElements(gl.LINES, mesh.capLinesIndsNum, gl.UNSIGNED_INT, 0);
 
 }
 
 function drawShadowSidesAltWireframe(obj,mesh) {
-    if(!mesh || !shadowSideProg) {
+    if(!mesh || !shadowEdgeProg) {
         return;
     }
 
     //
     gl.bindVertexArray(mesh.sideLinesVao);
-    gl.useProgram(shadowSideProg);
-    uniformsApply(gl,shadowSideProg);
+    gl.useProgram(shadowEdgeProg);
+    uniformsApply(gl,shadowEdgeProg);
 
 
-        gl.drawElements(gl.LINES, mesh.sideLinesIndsNum, gl.UNSIGNED_INT, 0);
+    gl.drawElements(gl.LINES, mesh.sideLinesIndsNum, gl.UNSIGNED_INT, 0);
 
 }
 
 
 function drawShadowCapsAlt(obj,mesh) {
-    if(!mesh || !shadowFrontProg || !shadowBackProg) {
+    if(!mesh || !shadowCapProg) {
         return;
     }
 
     //
     gl.bindVertexArray(mesh.capVao);
 
-
-    setDrawStates(gl,false,{
-        "front_face":gl.CW
-    });
-
-    gl.useProgram(shadowBackProg);
-    uniformsApply(gl,shadowBackProg);
-    gl.drawArrays(gl.TRIANGLES,0,mesh.capVertsNum);
-
-    setDrawStates(gl,false,{
-        "front_face":gl.CCW
-    });
-
-    gl.useProgram(shadowFrontProg);
-    uniformsApply(gl,shadowFrontProg);
-    gl.drawArrays(gl.TRIANGLES,0,mesh.capVertsNum);
-
+    gl.useProgram(shadowCapProg);
+    uniformsApply(gl,shadowCapProg);
+    gl.drawElements(gl.TRIANGLES, mesh.capIndsNum, gl.UNSIGNED_INT, 0);
 }
 
 function drawShadowSidesAlt(obj,mesh) {
-    if(!mesh || !shadowSideProg) {
+    if(!mesh || !shadowEdgeProg) {
         return;
     }
 
     //
 
     gl.bindVertexArray(mesh.sideVao);
-    gl.useProgram(shadowSideProg);
-    uniformsApply(gl,shadowSideProg);
+    gl.useProgram(shadowEdgeProg);
+    uniformsApply(gl,shadowEdgeProg);
     gl.drawElements(gl.TRIANGLES, mesh.sideIndsNum, gl.UNSIGNED_INT, 0);
 }
 
 function drawShadow(obj,mesh) {
-    if( !mesh || !shadowFrontProg || !shadowBackProg || !shadowSideProg) {
+    if( !mesh || !shadowCapProg || !shadowEdgeProg) {
         return;
     }
 
     uniformMatrix4fv(gl,"u_modelViewMat",false,obj.modelViewMat);
-    uniformMatrix4fv(gl,"u_invModelMat",false,obj.invModelMat);
     uniformMatrix4fv(gl,"u_modelMat",false,obj.modelMat);
     
     uniform4f(gl,"u_col",1,1,1,0.1);
 
     if(mymenu.shadowZ=='fail') {
-
-            drawShadowCapsAlt(obj,mesh);
-
+        drawShadowCapsAlt(obj,mesh);
     }
 
-        drawShadowSidesAlt(obj,mesh);
+    drawShadowSidesAlt(obj,mesh);
 
 
 
@@ -907,12 +876,11 @@ function drawShadow(obj,mesh) {
 }
 
 function drawShadowWireframe(obj,mesh) {
-    if( !mesh || !shadowFrontProg || !shadowBackProg || !shadowSideProg) {
+    if( !mesh || !shadowCapProg || !shadowEdgeProg) {
         return;
     }
 
     uniformMatrix4fv(gl,"u_modelViewMat",false,obj.modelViewMat);
-    uniformMatrix4fv(gl,"u_invModelMat",false,obj.invModelMat);
     uniformMatrix4fv(gl,"u_modelMat",false,obj.modelMat);
 
     //

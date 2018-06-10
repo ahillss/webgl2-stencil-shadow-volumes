@@ -20,4 +20,3 @@ Original idea was from [Mikola Lysneko](https://github.com/stackgl/webgl-worksho
 ## TODO
 
 * add directional light
-* simplify caps into single draw call/shader
