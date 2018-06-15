@@ -5,7 +5,7 @@ precision highp float;
 uniform vec4 u_lightViewPos;
 uniform vec3 u_lightAtten;
 uniform vec3 u_lightCol;
-uniform vec3 u_ambientCol;
+
 uniform vec3 u_materialCol;
 
 uniform float u_strength;
@@ -48,6 +48,5 @@ void main() {
     //col*=texture(u_colMap,v_tex).rgb;
   }
 
-  vec3 ambient=col*u_ambientCol;
-   outColor=vec4(ambient+u_lightCol*(col*diffuse+spec),1.0);
+   outColor=vec4(u_lightCol*(col*diffuse+spec),1.0);
 }
