@@ -1,6 +1,8 @@
-/*
- * point/directional light, backfaced, zfail, infinite
+
+/* Geometry shader based shadow volume:
+ * point/directional light, zfail, infinite
  * can be converted for front faced and zpass by following notes in comments
+ * can be modified to use backface by switching the first and last parameters of isFaceLit
  * expects vertex at index 0 to represent no adjacency (aka a hole in the mesh)
  * light is in world space
  */
@@ -41,7 +43,7 @@ bool isFaceLit(vec3 v0, vec3 v1, vec3 v2) {
 }
 
 void main() {
-    if(!isFaceLit(gl_in[4].gl_Position.xyz,gl_in[2].gl_Position.xyz,gl_in[0].gl_Position.xyz)) { //for front faced switch 0 and 4 
+    if(!isFaceLit(gl_in[0].gl_Position.xyz,gl_in[2].gl_Position.xyz,gl_in[4].gl_Position.xyz)) {
         return;
     }
 
@@ -50,7 +52,7 @@ void main() {
         int nb = (i*2+1);
         int i1 = (i*2+2) % 6;
 
-        if(vertexID[nb]==0||!isFaceLit(gl_in[i1].gl_Position.xyz,gl_in[nb].gl_Position.xyz,gl_in[i0].gl_Position.xyz)) { //for front faced switch i0 and i1
+        if(vertexID[nb]==0||!isFaceLit(gl_in[i0].gl_Position.xyz,gl_in[nb].gl_Position.xyz,gl_in[i1].gl_Position.xyz)) {
             //emit extruded edge
             gl_Position = u_viewProjMat*gl_in[i0].gl_Position;
             EmitVertex();
@@ -93,4 +95,52 @@ void main() {
     EmitVertex();
 
     EndPrimitive();
+}
+
+[prepare_geometry_js]
+
+function generateTriangleAdjacencies(verts,inds,noadjInd=0) {
+    var halfEdges={};
+    var adjInds=[];
+    
+    for(var i=0;i<inds.length/3;i++) {
+        var ind0=inds[i*3+0];
+        var ind1=inds[i*3+1];
+        var ind2=inds[i*3+2];
+
+        var key0=ind0+" "+ind1;
+        var key1=ind1+" "+ind2;
+        var key2=ind2+" "+ind0;
+                
+        halfEdges[key0]=(key0 in halfEdges)?halfEdges[key0]:[];
+        halfEdges[key1]=(key1 in halfEdges)?halfEdges[key1]:[];
+        halfEdges[key2]=(key2 in halfEdges)?halfEdges[key2]:[];
+        
+        halfEdges[key0].push(ind2);
+        halfEdges[key1].push(ind0);
+        halfEdges[key2].push(ind1);
+    }
+    
+    for(var i=0;i<inds.length/3;i++) {
+        var ind0=inds[i*3+0];
+        var ind1=inds[i*3+1];
+        var ind2=inds[i*3+2];
+
+        var oth0=halfEdges[ind1+" "+ind0]||[];
+        var oth1=halfEdges[ind2+" "+ind1]||[];
+        var oth2=halfEdges[ind0+" "+ind2]||[];
+        
+        var cur0=halfEdges[ind0+" "+ind1]||[];
+        var cur1=halfEdges[ind1+" "+ind2]||[];
+        var cur2=halfEdges[ind2+" "+ind0]||[];
+        
+        adjInds.push(inds[i*3+0]);
+        adjInds.push((oth0.length==1 && cur0.length==1)?oth0[0]:noadjInd);
+        adjInds.push(inds[i*3+1]);
+        adjInds.push((oth1.length==1 && cur1.length==1)?oth1[0]:noadjInd);
+        adjInds.push(inds[i*3+2]);
+        adjInds.push((oth2.length==1 && cur2.length==1)?oth2[0]:noadjInd);
+    }
+    
+    return adjInds;
 }

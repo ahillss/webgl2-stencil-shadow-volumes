@@ -205,8 +205,8 @@ function onInit2() {
     },log);
 
     //
-    getProgram(gl,"shaders/shdvoledge.vs","shaders/shdvol.fs").then(function(prog) {shadowEdgeProg=prog;},log);
-    getProgram(gl,"shaders/shdvolcap.vs","shaders/shdvol.fs").then(function(prog) {shadowCapProg=prog;},log);
+    getProgram(gl,"shaders/shdvoledge.vs","shaders/shdvoledge.fs").then(function(prog) {shadowEdgeProg=prog;},log);
+    getProgram(gl,"shaders/shdvolcap.vs","shaders/shdvolcap.fs").then(function(prog) {shadowCapProg=prog;},log);
 
     getProgram(gl,"shaders/light.vs","shaders/light.fs").then(function(prog) {lightProg=prog;},log);
     getProgram(gl,"shaders/billboard.vs","shaders/billboard.fs").then(function(prog) {billboardProg=prog;},log);
@@ -217,49 +217,6 @@ function onInit2() {
     mygl.uniform3f(gl,"u_lightCol",1.0,1.0,1.0);
     mygl.uniform3f(gl,"u_ambientCol",0.3,0.3,0.3);
     mygl.uniform1i(gl,"u_colMap",0);
-}
-
-function shadowStates() {
-    mygl.setDrawStates(gl,true,{
-        "depth_test":true,
-        "stencil_test":true,
-        "depth_writemask":false,
-        "color_writemask":[false,false,false,false],
-        "stencil_func":gl.ALWAYS,
-        "stencil_ref":0x0,
-        "stencil_valuemask":0xff,
-
-
-        //  "stencil_writemask":0xff,
-    });
-
-    if(mymenu.shadowZ=='pass') {
-        mygl.setDrawStates(gl,false,{
-            "stencil_fail":gl.KEEP,
-            "stencil_pass_depth_fail":gl.KEEP,
-            "stencil_back_pass_depth_pass":gl.DECR_WRAP,
-            "stencil_front_pass_depth_pass":gl.INCR_WRAP,
-        });
-    } else { //zfail
-        mygl.setDrawStates(gl,false,{
-            "stencil_fail":gl.KEEP,
-            "stencil_back_pass_depth_fail":gl.INCR_WRAP,
-            "stencil_front_pass_depth_fail":gl.DECR_WRAP,
-            "stencil_pass_depth_pass":gl.KEEP,
-        });
-    }
-
-    if(mymenu.shadowFace=='back') {
-        mygl.setDrawStates(gl,false,{
-            "depth_func":gl.LEQUAL
-        });
-    } else {
-        mygl.setDrawStates(gl,false,{
-            "polygon_offset_fill":true,
-            "polygon_offset_factor":0,
-            "polygon_offset_units":100
-        });
-    }
 }
 
 function drawObjectLit(obj,mesh,mtrl) {
@@ -455,32 +412,51 @@ function onRender(curTime) {
     
     //render shadow volume stencils
     if(!mymenu.disableShadows) {
-        shadowStates();
+    var zfail=mymenu.shadowZ!='pass';
+    var backface=mymenu.shadowFace=='back';
+    
+    mygl.setDrawStates(gl,true,{
+        "color_writemask":[false,false,false,false],
+
+        "depth_test":true,
+        "depth_writemask":false,
+        "depth_func":backface?gl.LEQUAL:gl.LESS,
+        
+        "polygon_offset_fill":backface?false:true,
+        "polygon_offset_factor":0,
+        "polygon_offset_units":100,
+    
+        "stencil_test":true,     
+        
+        "stencil_func":gl.ALWAYS,
+        "stencil_ref":0x0,
+        "stencil_valuemask":0xff,
+        
+        "stencil_fail":gl.KEEP,    
+        "stencil_back_pass_depth_pass":zfail?gl.KEEP:gl.DECR_WRAP,
+        "stencil_front_pass_depth_pass":zfail?gl.KEEP:gl.INCR_WRAP,    
+        "stencil_back_pass_depth_fail":zfail?gl.INCR_WRAP:gl.KEEP,
+        "stencil_front_pass_depth_fail":zfail?gl.DECR_WRAP:gl.KEEP,
+    });
+    
         drawShadow(scene.teapot,teapotShdMesh);
     }
-    //
-
-    mygl.setDrawStates(gl,false,{
-        "depth_test":true,
-        "depth_writemask":true
-    });
-
-    //gl.clear(gl.DEPTH_BUFFER_BIT);
 
     //render lit objects
     mygl.setDrawStates(gl,true,{
-        "cull_face":true,
-        "depth_test":true,
         "stencil_test":true,
+        
+        "stencil_func":gl.EQUAL,
+        "stencil_ref":0x0,
+        "stencil_valuemask":0xff,
+        
         "stencil_fail":gl.KEEP,
         "stencil_pass_depth_fail":gl.KEEP,
         "stencil_pass_depth_pass":gl.KEEP,
-        "stencil_func":gl.EQUAL, //gl.NOTEQUAL,
-        "stencil_ref":0x0,
-        "stencil_valuemask":0xff,
-
-        // "stencil_writemask":0xff,
         
+        "cull_face":true,
+        
+        "depth_test":true,
         "depth_writemask":false,
         "depth_func":gl.LEQUAL,
         
@@ -496,14 +472,12 @@ function onRender(curTime) {
     drawObjectLit(scene.teapot,teapotMesh,teapotMtrl);
 
     //render debug shadow volumes
-    mygl.setDrawStates(gl,true,{
-        "depth_test":true,
-        "depth_writemask":false,
-        "depth_func":gl.LEQUAL,
-    });
-
     if(mymenu.shadowDebugVolume) {
-        mygl.setDrawStates(gl,false,{
+        mygl.setDrawStates(gl,true,{
+            "depth_test":true,
+            "depth_writemask":false,
+            "depth_func":gl.LEQUAL,
+            
             "blend":true,
             "blend_src":gl.SRC_ALPHA,
             "blend_dst":gl.ONE_MINUS_SRC_ALPHA,
@@ -511,12 +485,17 @@ function onRender(curTime) {
 
         drawShadow(scene.teapot,teapotShdMesh);
     }
-
+    
+    //render debug shadow volumes wireframe
     if(mymenu.shadowDebugWireframe) {
-        mygl.setDrawStates(gl,false,{
-            "blend":false,
+        mygl.setDrawStates(gl,true,{
+            "depth_test":true,
+            "depth_writemask":false,
+            "depth_func":gl.LEQUAL,
+            
+            "blend":true,
             "blend_src":gl.ONE,
-            "blend_dst":gl.DST_ALPHA,
+            "blend_dst":gl.ONE,
         });
 
         drawShadowWireframe(scene.teapot,teapotShdMesh);
@@ -531,6 +510,7 @@ function onRender(curTime) {
         "blend_src":gl.SRC_ALPHA,
         "blend_dst":gl.ONE_MINUS_SRC_ALPHA, //gl.ONE
     });
+    
     drawBillboard(scene.light);
 
 
@@ -651,7 +631,7 @@ function init() {
     
 
     canvas=document.getElementById("canvas");
-    gl=mygl.createContext(canvas,{stencil: true,antialias: true});
+    gl=mygl.createContext(canvas,{stencil: true,antialias: true,premultipliedAlpha: false, alpha: false});
 
     if(!gl) {
         return;
@@ -693,11 +673,11 @@ function drawShadow(obj,mesh) {
         return;
     }
 
+    //
     mygl.uniformMatrix4fv(gl,"u_modelViewMat",false,obj.modelViewMat);
     mygl.uniformMatrix4fv(gl,"u_modelMat",false,obj.modelMat);
 
-    mygl.uniform4f(gl,"u_col",1,1,1,0.1);
-
+    //
     if(mymenu.shadowZ=='fail') {
         gl.bindVertexArray(mesh.capVao);
         gl.useProgram(shadowCapProg);
@@ -705,15 +685,11 @@ function drawShadow(obj,mesh) {
         gl.drawElements(gl.TRIANGLES, mesh.capIndsNum, gl.UNSIGNED_INT, 0);
     }
 
-
     //
-
     gl.bindVertexArray(mesh.sideVao);
     gl.useProgram(shadowEdgeProg);
     mygl.uniformsApply(gl,shadowEdgeProg);
     gl.drawElements(gl.TRIANGLES, mesh.sideIndsNum, gl.UNSIGNED_INT, 0);
-    
-
 }
 
 function drawShadowWireframe(obj,mesh) {
@@ -721,32 +697,23 @@ function drawShadowWireframe(obj,mesh) {
         return;
     }
 
+    //
     mygl.uniformMatrix4fv(gl,"u_modelViewMat",false,obj.modelViewMat);
     mygl.uniformMatrix4fv(gl,"u_modelMat",false,obj.modelMat);
 
     //
-
-
     if(mymenu.shadowZ=='fail') {
-        mygl.uniform4f(gl,"u_col",1,1,0,1);
-
-
-        //
         gl.bindVertexArray(mesh.capLinesVao);
         gl.useProgram(shadowCapProg);
         mygl.uniformsApply(gl,shadowCapProg);
         gl.drawElements(gl.LINES, mesh.capLinesIndsNum, gl.UNSIGNED_INT, 0);
     }
 
-
-    mygl.uniform4f(gl,"u_col",0,1,1,1);
-
+    //
     gl.bindVertexArray(mesh.sideLinesVao);
     gl.useProgram(shadowEdgeProg);
     mygl.uniformsApply(gl,shadowEdgeProg);
     gl.drawElements(gl.LINES, mesh.sideLinesIndsNum, gl.UNSIGNED_INT, 0);
-
-
 }
 
 
