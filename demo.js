@@ -146,9 +146,8 @@ function initMenu() {
     f4.open();
 }
 
-function onInit2() {
-    //
-    scene.ground={
+function createSceneObject() {
+    return {
         "modelMat" : mat4.create(),
         "invModelMat" : mat4.create(),
         "modelViewMat" : mat4.create(),
@@ -156,15 +155,13 @@ function onInit2() {
         "modelViewProjMat" : mat4.create(),
         "modelViewInfProjMat" : mat4.create()
     };
+}
 
-    scene.teapot={
-        "modelMat" : mat4.create(),
-        "invModelMat" : mat4.create(),
-        "modelViewMat" : mat4.create(),
-        "normalMat" : mat3.create(),
-        "modelViewProjMat" : mat4.create(),
-        "modelViewInfProjMat" : mat4.create(),
-    };
+function onInit2() {
+    //
+    scene.ground=createSceneObject();
+
+    scene.teapot=createSceneObject();
 
     scene.light={
         "modelMat" : mat4.create(),
@@ -266,29 +263,6 @@ function shadowStates() {
     }
 }
 
-function drawObjectDepth(obj,mesh) {
-    if(!mesh || !simpleProg) {
-        return;
-    }
-
-    //
-    gl.useProgram(simpleProg);
-
-    gl.bindVertexArray(mesh.vao);
-
-
-
-    //
-
-    mygl.uniformMatrix4fv(gl,"u_modelMat",false,obj.modelMat);
-
-    mygl.uniformsApply(gl,simpleProg);
-
-    //draw
-    gl.drawElements(gl.TRIANGLES, mesh.indsNum, gl.UNSIGNED_INT, 0);
-
-}
-
 function drawObjectLit(obj,mesh,mtrl) {
     if(!mesh || !lightProg) {
         return;
@@ -332,7 +306,7 @@ function drawObjectLit(obj,mesh,mtrl) {
 
 }
 
-function drawObjectAmbient(obj,mesh,mtrl) {
+function drawObjectAmbientAndDepth(obj,mesh,mtrl) {
     if(!mesh || !ambientProg) {
         return;
     }
@@ -467,22 +441,7 @@ function onRender(curTime) {
     //gl.clearColor(0.1,0.1,0.1,1);
     gl.viewport(0,0,canvas.width,canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT|gl.STENCIL_BUFFER_BIT);
-
-    //render depths
-    /*mygl.setDrawStates(gl,true,{
-        "depth_test":true,
-        "cull_face":true,
-        "color_writemask":[false,false,false,false]
-    });
-
-    if(mymenu.groundVisible){
-        drawObjectDepth(scene.ground,groundMesh);
-    }
-
-    drawObjectDepth(scene.teapot,teapotMesh);*/
-    
-    
-    
+   
     //draw depth and ambient color
     mygl.setDrawStates(gl,true,{
         "cull_face":true,
@@ -490,10 +449,10 @@ function onRender(curTime) {
     });
 
     if(mymenu.groundVisible){
-        drawObjectAmbient(scene.ground,groundMesh,groundMtrl);
+        drawObjectAmbientAndDepth(scene.ground,groundMesh,groundMtrl);
     }
     
-    drawObjectAmbient(scene.teapot,teapotMesh,teapotMtrl);
+    drawObjectAmbientAndDepth(scene.teapot,teapotMesh,teapotMtrl);
     
     //render shadow volume stencils
     if(!mymenu.disableShadows) {
