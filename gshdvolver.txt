@@ -1,8 +1,6 @@
 
 /* Geometry shader based shadow volume:
  * point/directional light, zfail, infinite
- * can be converted for front faced and zpass by following notes in comments
- * can be modified to use backface by switching the first and last parameters of isFaceLit
  * expects vertex at index 0 to represent no adjacency (aka a hole in the mesh)
  * light is in world space
  */
@@ -35,6 +33,8 @@ uniform mat4 u_viewProjMat;
 uniform vec4 u_light;
 
 bool isFaceLit(vec3 v0, vec3 v1, vec3 v2) {
+    //switch v0 with v2 for backfaced
+    
     vec3 n=cross(v1-v0,v2-v0);
     vec3 d0 = u_light.xyz-u_light.w*v0;
     vec3 d1 = u_light.xyz-u_light.w*v1;
