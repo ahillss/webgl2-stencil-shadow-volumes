@@ -206,8 +206,8 @@ function onInit2() {
         "pos" : vec4.fromValues(-1,4.5,2,1),
         "viewPos" : vec4.create()
     };
-
-    billboardMesh={"vao":createGeometry([0,2,[-1,-1, 1,-1, -1,1 ,1,1]],null)};
+    var billboardVao=mygl.createVao(gl,[0],[2],[gl.FLOAT],[mygl.createVertBuf(gl,Float32Array.from([-1,-1, 1,-1, -1,1 ,1,1]))],null);
+    billboardMesh={"vao":billboardVao};
 
     loadText("models/teapot.obj").then(function(objStr){
         var objMesh = new OBJ.Mesh(objStr);
@@ -241,12 +241,12 @@ function onInit2() {
     },log);
 
     //
-    getProgram(gl,"shaders/shdvoledge.vs","shaders/shdvoledge.fs").then(function(prog) {shadowEdgeProg=prog;},log);
-    getProgram(gl,"shaders/shdvolcap.vs","shaders/shdvolcap.fs").then(function(prog) {shadowCapProg=prog;},log);
+    mygl.getProgram(gl,"shaders/shdvoledge.vs","shaders/shdvoledge.fs").then(function(prog) {shadowEdgeProg=prog;},log);
+    mygl.getProgram(gl,"shaders/shdvolcap.vs","shaders/shdvolcap.fs").then(function(prog) {shadowCapProg=prog;},log);
 
-    getProgram(gl,"shaders/light.vs","shaders/light.fs").then(function(prog) {lightProg=prog;},log);
-    getProgram(gl,"shaders/billboard.vs","shaders/billboard.fs").then(function(prog) {billboardProg=prog;},log);
-    getProgram(gl,"shaders/ambient.vs","shaders/ambient.fs").then(function(prog) {ambientProg=prog;},log);
+    mygl.getProgram(gl,"shaders/light.vs","shaders/light.fs").then(function(prog) {lightProg=prog;},log);
+    mygl.getProgram(gl,"shaders/billboard.vs","shaders/billboard.fs").then(function(prog) {billboardProg=prog;},log);
+    mygl.getProgram(gl,"shaders/ambient.vs","shaders/ambient.fs").then(function(prog) {ambientProg=prog;},log);
 
     //
     mygl.uniform3f(gl,"u_lightAtten",0.9,0.1,0.01);
@@ -560,16 +560,6 @@ function log(msg) {
     var textarea = document.getElementById("log");
     textarea.innerHTML += String(msg).replace(/\n/g,"<br />") + "<br />";
 }
-
-//~ var getTime=(function(){
-//~ var start;
-//~ return (()=>{
-//~ start=start||Date.now();
-//~ return ((Date.now()-start)/1000)%3.402823e+38;
-//~ });
-//~ })();
-
-
 
 function onAnimate() {
 
