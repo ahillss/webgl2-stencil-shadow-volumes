@@ -360,3 +360,55 @@ mygl.uniformsApply=(gl,prog)=>{
         }
     }
 }
+
+mygl.createVertBuf=(gl,data)=>{
+    var buf=gl.createBuffer();
+    gl.bindVertexArray(null);
+    gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+    gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER,null);
+    return buf;
+}
+
+mygl.createVertBufs=(gl,datas)=>{
+    return datas.map(data => mygl.createVertBuf(gl,data));
+}
+
+mygl.createIndBuf=(gl,data)=>{
+    var buf=gl.createBuffer();
+    gl.bindVertexArray(null);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buf);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,data,gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,null);
+    return buf;
+}
+
+mygl.createVao=(gl,locs,sizes,types,vertBufs,indBuf)=>{
+    var vao=gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    
+    for(var i=0;i<locs.length;i++) {
+        gl.bindBuffer(gl.ARRAY_BUFFER,vertBufs[i]);
+        gl.vertexAttribPointer(locs[i],sizes[i],types[i],false,0,0);
+        gl.enableVertexAttribArray(locs[i]);
+    }
+    
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indBuf);    
+    gl.bindVertexArray(null);
+    return vao;
+}
+
+mygl.createStridedVao=(gl,locs,sizes,types,stride,offsets,vertBuf,indBuf)=>{
+    var vao=gl.createVertexArray();
+    gl.bindVertexArray(vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER,vertBuf);
+    
+    for(var i=0;i<locs.length;i++) {
+        gl.vertexAttribPointer(locs[i],sizes[i],types[i],false,stride,offsets[i]);
+        gl.enableVertexAttribArray(locs[i]);
+    }
+    
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indBuf);    
+    gl.bindVertexArray(null);
+    return vao;
+}

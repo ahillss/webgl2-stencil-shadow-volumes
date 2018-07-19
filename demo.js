@@ -90,8 +90,45 @@ function calcObjTransform(obj,projMat,infProjMat,viewMat) {
 }
 
 function doMesh(posData,norData,texData,indData) {
-    var vao=createGeometry([0,3,posData],[1,3,norData],[2,2,texData],indData);
+    var vertBufs=mygl.createVertBufs(gl,[posData,norData,texData].map(x=>Float32Array.from(x)));
+    var indBuf=mygl.createIndBuf(gl,Uint32Array.from(indData));
+    var vao=mygl.createVao(gl,[0,1,2],[3,3,2],[gl.FLOAT,gl.FLOAT,gl.FLOAT],vertBufs,indBuf);
     return {"indsNum":indData.length,"vao":vao};
+}
+
+function doShadowMesh(verts,inds) {
+    var cleanedGeom=cleanVertsInds(verts,inds)
+    var edgeGeom=generateSideVertsInds(cleanedGeom.vertices,cleanedGeom.indices);
+    
+    var capGeom=generateCapVerts2(cleanedGeom.vertices,cleanedGeom.indices);
+    var edgeGeom=generateSideVertsInds2(cleanedGeom.vertices,cleanedGeom.indices);
+    
+    var capVertBuf=mygl.createVertBuf(gl,Float32Array.from(capGeom.vertices));
+    var edgeVertBuf=mygl.createVertBuf(gl,Float32Array.from(edgeGeom.vertices));
+
+    var capIndBuf=mygl.createIndBuf(gl,Uint32Array.from(capGeom.indices));
+    var edgeIndBuf=mygl.createIndBuf(gl,Uint32Array.from(edgeGeom.indices));
+    
+    var capLineIndBuf=mygl.createIndBuf(gl,Uint32Array.from(capGeom.line_indices));
+    var edgeLineIndBuf=mygl.createIndBuf(gl,Uint32Array.from(edgeGeom.line_indices));
+    
+    var capVao=mygl.createStridedVao(gl,[0,1,2],[3,3,3],[gl.FLOAT,gl.FLOAT,gl.FLOAT],9*4,[0,3,6].map(x=>x*4),capVertBuf,capIndBuf);
+    var edgeVao=mygl.createStridedVao(gl,[0,1,2,3],[3,3,3,3],[gl.FLOAT,gl.FLOAT,gl.FLOAT,gl.FLOAT],12*4,[0,3,6,9].map(x=>x*4),edgeVertBuf,edgeIndBuf);
+    
+    var capLineVao=mygl.createStridedVao(gl,[0,1,2],[3,3,3],[gl.FLOAT,gl.FLOAT,gl.FLOAT],9*4,[0,3,6].map(x=>x*4),capVertBuf,capLineIndBuf);
+    var edgeLineVao=mygl.createStridedVao(gl,[0,1,2,3],[3,3,3,3],[gl.FLOAT,gl.FLOAT,gl.FLOAT,gl.FLOAT],12*4,[0,3,6,9].map(x=>x*4),edgeVertBuf,edgeLineIndBuf);
+    
+
+    return {
+        "capVao":capVao,
+        "edgeVao":edgeVao,
+        "capLineVao":capLineVao,
+        "edgeLineVao":edgeLineVao,
+        "capIndsNum":capGeom.indices.length,
+        "edgeIndsNum":edgeGeom.indices.length,
+        "capLineIndsNum":capGeom.line_indices.length,
+        "edgeLineIndsNum":edgeGeom.line_indices.length,
+    };
 }
 
 function initMenu() {
@@ -647,27 +684,6 @@ function init() {
     onAnimate();
 }
 
-function doShadowMesh(verts,inds) {
-
-    var cleanedGeometry=cleanVertsInds(verts,inds)
-    var capVerts=generateCapVerts(cleanedGeometry.vertices,cleanedGeometry.indices);
-    var capVao=createGeometry([0,3,capVerts[0]],[1,3,capVerts[1]],[2,3,capVerts[2]],capVerts[3]);
-    var capLinesVao=createGeometry([0,3,capVerts[0]],[1,3,capVerts[1]],[2,3,capVerts[2]],capVerts[4]);
-
-    var result3=generateSideVertsInds(cleanedGeometry.vertices,cleanedGeometry.indices);
-    var sideVao=createGeometry([0,3,result3[0]],[1,3,result3[1]],[2,3,result3[2]],[3,3,result3[3]],result3[4]);
-
-    var sideLinesVao=createGeometry([0,3,result3[0]],[1,3,result3[1]],[2,3,result3[2]],[3,3,result3[3]],result3[5]);
-
-
-    return {
-        "capVao":capVao,"capVertsNum":capVerts[0].length/3,"capIndsNum":capVerts[3].length,
-        "capLinesVao":capLinesVao,"capLinesIndsNum":capVerts[4].length,
-        "sideVao":sideVao,"sideIndsNum":result3[4].length,
-        "sideLinesVao":sideLinesVao,"sideLinesIndsNum":result3[5].length,
-    };
-}
-
 function drawShadow(obj,mesh) {
     if( !mesh || !shadowCapProg || !shadowEdgeProg) {
         return;
@@ -686,10 +702,10 @@ function drawShadow(obj,mesh) {
     }
 
     //
-    gl.bindVertexArray(mesh.sideVao);
+    gl.bindVertexArray(mesh.edgeVao);
     gl.useProgram(shadowEdgeProg);
     mygl.uniformsApply(gl,shadowEdgeProg);
-    gl.drawElements(gl.TRIANGLES, mesh.sideIndsNum, gl.UNSIGNED_INT, 0);
+    gl.drawElements(gl.TRIANGLES, mesh.edgeIndsNum, gl.UNSIGNED_INT, 0);
 }
 
 function drawShadowWireframe(obj,mesh) {
@@ -703,17 +719,17 @@ function drawShadowWireframe(obj,mesh) {
 
     //
     if(mymenu.shadowZ=='fail') {
-        gl.bindVertexArray(mesh.capLinesVao);
+        gl.bindVertexArray(mesh.capLineVao);
         gl.useProgram(shadowCapProg);
         mygl.uniformsApply(gl,shadowCapProg);
-        gl.drawElements(gl.LINES, mesh.capLinesIndsNum, gl.UNSIGNED_INT, 0);
+        gl.drawElements(gl.LINES, mesh.capLineIndsNum, gl.UNSIGNED_INT, 0);
     }
 
     //
-    gl.bindVertexArray(mesh.sideLinesVao);
+    gl.bindVertexArray(mesh.edgeLineVao);
     gl.useProgram(shadowEdgeProg);
     mygl.uniformsApply(gl,shadowEdgeProg);
-    gl.drawElements(gl.LINES, mesh.sideLinesIndsNum, gl.UNSIGNED_INT, 0);
+    gl.drawElements(gl.LINES, mesh.edgeLineIndsNum, gl.UNSIGNED_INT, 0);
 }
 
 

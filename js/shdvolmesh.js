@@ -181,10 +181,114 @@ function generateSideVertsInds(verts,inds) {
     
 }
 
-function generateCapVerts(verts,inds) {
-    var verts0Out=[];
-    var verts1Out=[];
-    var verts2Out=[];
+function generateSideVertsInds2(verts,inds) {
+    //get edges
+    var edges={}; //key : [ind0,ind1,halfEdges0,halfEdges1]
+    
+    for(var i=0;i<inds.length/3;i++) {
+        var ind0=inds[i*3+0];
+        var ind1=inds[i*3+1];
+        var ind2=inds[i*3+2];
+        
+        var edgeInds0=(ind0<ind1)?[ind0,ind1]:[ind1,ind0];
+        var edgeInds1=(ind1<ind2)?[ind1,ind2]:[ind2,ind1];
+        var edgeInds2=(ind2<ind0)?[ind2,ind0]:[ind0,ind2];
+        
+        var key0=edgeInds0[0]+" "+edgeInds0[1];
+        var key1=edgeInds1[0]+" "+edgeInds1[1];
+        var key2=edgeInds2[0]+" "+edgeInds2[1];
+        
+        edges[key0]=(key0 in edges)?edges[key0]:[...edgeInds0,[],[]];
+        edges[key1]=(key1 in edges)?edges[key1]:[...edgeInds1,[],[]];
+        edges[key2]=(key2 in edges)?edges[key2]:[...edgeInds2,[],[]];
+        
+        ((ind0<ind1)?edges[key0][2]:edges[key0][3]).push(ind2);
+        ((ind1<ind2)?edges[key1][2]:edges[key1][3]).push(ind0);
+        ((ind2<ind0)?edges[key2][2]:edges[key2][3]).push(ind1);
+    }
+    
+    //
+    var vertsOut=[];
+    
+    var indsOut=[];
+    
+    var todo=[];
+    
+    var lineIndsOut=[];
+    
+    //console.log(edges);
+
+    for(var i in edges) {
+        var ind0=edges[i][0];
+        var ind1=edges[i][1];
+        
+        var halfEdges0=edges[i][2];
+        var halfEdges1=edges[i][3];
+        
+        
+        if(halfEdges0.length ==1 && halfEdges1.length==1) {
+            var adjInd0=halfEdges0[0];
+            var adjInd1=halfEdges1[0];
+            todo.push([ind0,ind1,adjInd0,adjInd1]);
+            todo.push([ind1,ind0,adjInd1,adjInd0]);
+        } else {
+            for(var j=0;j<halfEdges0.length;j++) {
+                var adjInd0=halfEdges0[j];
+                var adjInd1=adjInd0;
+                //console.log(adjInd0);
+                todo.push([ind0,ind1,adjInd0,adjInd1]);
+                
+                //~ todo.push([ind1,ind0,adjInd1,adjInd0]);
+            }
+            
+            for(var j=0;j<halfEdges1.length;j++) {
+                var adjInd1=halfEdges1[j];
+                var adjInd0=adjInd1;
+                //console.log(adjInd1);
+                todo.push([ind1,ind0,adjInd1,adjInd0]);
+                
+                //~ todo.push([ind0,ind1,adjInd0,adjInd1]);
+            }
+        }                
+    }
+    
+    //console.log(todo);
+    
+    for(var i=0;i<todo.length;i++) {
+        var ind0=todo[i][0];
+        var ind1=todo[i][1];
+        var adjInd0=todo[i][2];
+        var adjInd1=todo[i][3];
+        
+        //console.log(todo);
+        
+        var vert0=verts.slice(ind0*3,ind0*3+3);
+        var vert1=verts.slice(ind1*3,ind1*3+3);
+        var adjVert0=verts.slice(adjInd0*3,adjInd0*3+3);
+        var adjVert1=verts.slice(adjInd1*3,adjInd1*3+3);
+        
+        //console.log(adjInd0,adjInd1);
+        //console.log(vert0,vert1,adjVert0,adjVert1);
+        
+        for(var j=0;j<4;j++) {
+            vertsOut.push(...vert0);
+            vertsOut.push(...vert1);
+            vertsOut.push(...adjVert0);
+            vertsOut.push(...adjVert1);
+        }
+    }
+    
+    for(var i=0;i<todo.length;i++) {
+        indsOut.push(...[i*4+0,i*4+2,i*4+1, i*4+1,i*4+2,i*4+3]);
+        lineIndsOut.push(...[i*4+0,i*4+2, i*4+1,i*4+3]);
+    }
+    
+    return {"vertices":vertsOut,"indices":indsOut,"line_indices":lineIndsOut};
+    
+}
+function generateCapVerts2(verts,inds) {
+    var vertsOut=[];
+    
     var indsOut=[];
     var lineIndsOut=[];
     
@@ -198,21 +302,21 @@ function generateCapVerts(verts,inds) {
         var vert2=[verts[ind2*3+0],verts[ind2*3+1],verts[ind2*3+2]];
         
         for(var j=0;j<2;j++) {
-            verts0Out.push(...vert0);
-            verts1Out.push(...vert1);
-            verts2Out.push(...vert2);
+            vertsOut.push(...vert0);
+            vertsOut.push(...vert1);
+            vertsOut.push(...vert2);
         }
             
         for(var j=0;j<2;j++) {
-            verts0Out.push(...vert1);
-            verts1Out.push(...vert2);
-            verts2Out.push(...vert0);
+            vertsOut.push(...vert1);
+            vertsOut.push(...vert2);
+            vertsOut.push(...vert0);
         }
             
         for(var j=0;j<2;j++) {
-            verts0Out.push(...vert2);
-            verts1Out.push(...vert0);
-            verts2Out.push(...vert1);
+            vertsOut.push(...vert2);
+            vertsOut.push(...vert0);
+            vertsOut.push(...vert1);
         }
     }
     
@@ -226,6 +330,5 @@ function generateCapVerts(verts,inds) {
         lineIndsOut.push(...([i*3+0,i*3+1, i*3+1,i*3+2, i*3+2,i*3+0].map(x=>x*2+1)));
     }
     
-    var out=[verts0Out,verts1Out,verts2Out,indsOut,lineIndsOut];
-    return out;
+    return {"vertices":vertsOut,"indices":indsOut,"line_indices":lineIndsOut};
 }
