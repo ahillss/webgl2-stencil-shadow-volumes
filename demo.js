@@ -98,10 +98,9 @@ function doMesh(posData,norData,texData,indData) {
 
 function doShadowMesh(verts,inds) {
     var cleanedGeom=cleanVertsInds(verts,inds)
-    var edgeGeom=generateSideVertsInds(cleanedGeom.vertices,cleanedGeom.indices);
     
-    var capGeom=generateCapVerts2(cleanedGeom.vertices,cleanedGeom.indices);
-    var edgeGeom=generateSideVertsInds2(cleanedGeom.vertices,cleanedGeom.indices);
+    var capGeom=generateCapVertsInds(cleanedGeom.vertices,cleanedGeom.indices);
+    var edgeGeom=generateSideVertsInds(cleanedGeom.vertices,cleanedGeom.indices);
     
     var capVertBuf=mygl.createVertBuf(gl,Float32Array.from(capGeom.vertices));
     var edgeVertBuf=mygl.createVertBuf(gl,Float32Array.from(edgeGeom.vertices));
