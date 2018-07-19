@@ -1,5 +1,5 @@
 
-/* Geometry shader based shadow volume:
+/* Geometry shader based shadow volume (method from GPU Gems 3, chapter 11):
  * point/directional light, zfail, infinite
  * expects vertex at index 0 to represent no adjacency (aka a hole in the mesh)
  * light is in world space
