@@ -1,77 +1,81 @@
+var shdvolgen=shdvolgen||{};
 
-function calcTriangleArea(p0,p1,p2) {
-    var e0=[p1[0]-p0[0],p1[1]-p0[1],p1[2]-p0[2]]; //p1-p0
-    var e1=[p2[0]-p0[0],p2[1]-p0[1],p2[2]-p0[2]]; //p2-p0
-    var c=[e0[1]*e1[2]-e0[2]*e1[1],e0[2]*e1[0]-e0[0]*e1[2],e0[0]*e1[1]-e0[1]*e1[0]];//cross(e0,e1)
-    var d=c[0]*c[0]+c[1]*c[1]+c[2]*c[2]; //dot(c,c)
-    return Math.sqrt(d)*0.5;
-}
+(()=>{
+    function calcTriangleArea(p0,p1,p2) {
+        var e0=[p1[0]-p0[0],p1[1]-p0[1],p1[2]-p0[2]]; //p1-p0
+        var e1=[p2[0]-p0[0],p2[1]-p0[1],p2[2]-p0[2]]; //p2-p0
+        var c=[e0[1]*e1[2]-e0[2]*e1[1],e0[2]*e1[0]-e0[0]*e1[2],e0[0]*e1[1]-e0[1]*e1[0]];//cross(e0,e1)
+        var d=c[0]*c[0]+c[1]*c[1]+c[2]*c[2]; //dot(c,c)
+        return Math.sqrt(d)*0.5;
+    }
 
-function removeTinyTriangles(verts,inds,minArea=1.0e-5) {
-    var indsOut=[];
-    
-    for(var i=0;i<inds.length/3;i++) {
-        var ind0=inds[i*3+0];
-        var ind1=inds[i*3+1];
-        var ind2=inds[i*3+2];
+    function removeTinyTriangles(verts,inds,minArea=1.0e-5) {
+        var indsOut=[];
+        
+        for(var i=0;i<inds.length/3;i++) {
+            var ind0=inds[i*3+0];
+            var ind1=inds[i*3+1];
+            var ind2=inds[i*3+2];
 
-        var v0=[verts[ind0*3],verts[ind0*3+1],verts[ind0*3+2]];
-        var v1=[verts[ind1*3],verts[ind1*3+1],verts[ind1*3+2]];
-        var v2=[verts[ind2*3],verts[ind2*3+1],verts[ind2*3+2]];
+            var v0=[verts[ind0*3],verts[ind0*3+1],verts[ind0*3+2]];
+            var v1=[verts[ind1*3],verts[ind1*3+1],verts[ind1*3+2]];
+            var v2=[verts[ind2*3],verts[ind2*3+1],verts[ind2*3+2]];
 
-        if(calcTriangleArea(v0,v1,v2)<minArea) {
-            continue;
+            if(calcTriangleArea(v0,v1,v2)<minArea) {
+                continue;
+            }
+            
+            indsOut.push(ind0);
+            indsOut.push(ind1);
+            indsOut.push(ind2);
         }
         
-        indsOut.push(ind0);
-        indsOut.push(ind1);
-        indsOut.push(ind2);
+        return indsOut;
     }
-    
-    return indsOut;
-}
 
-function roundVerts(verts,places=10) {
-    verts=verts.slice();
-    var p=Math.pow(10, places);
-    
-    for(var i=0;i<verts.length;i++) {
-        verts[i]=Math.round(verts[i]*p)/p;
-    }
-    
-    return verts;
-}
-
-function removeDuplVerts(verts,inds, prependVerts=[]) {
-    var indsByVert={};
-    var vertsOut=prependVerts.slice();
-    
-    for(var i=0;i<inds.length;i++) {
-        var vert=[verts[inds[i]*3+0],verts[inds[i]*3+1],verts[inds[i]*3+2]];
-        var key=vert[0]+" "+vert[1]+" "+vert[2];
-      
-        if(!(key in indsByVert)) {
-            indsByVert[key]=vertsOut.length/3;
-            vertsOut.push(vert[0]);
-            vertsOut.push(vert[1]);
-            vertsOut.push(vert[2]);
+    function roundVerts(verts,places=10) {
+        verts=verts.slice();
+        var p=Math.pow(10, places);
+        
+        for(var i=0;i<verts.length;i++) {
+            verts[i]=Math.round(verts[i]*p)/p;
         }
         
-        inds[i]=indsByVert[key];
+        return verts;
     }
-    
-    //
-    return vertsOut;
-}
 
-function cleanVertsInds(verts,inds) {
-    inds=removeTinyTriangles(verts,inds);
-    verts=roundVerts(verts);
-    verts=removeDuplVerts(verts,inds);
-    return {"vertices":verts,"indices":inds};
-}
+    function removeDuplVerts(verts,inds, prependVerts=[]) {
+        var indsByVert={};
+        var vertsOut=prependVerts.slice();
+        
+        for(var i=0;i<inds.length;i++) {
+            var vert=[verts[inds[i]*3+0],verts[inds[i]*3+1],verts[inds[i]*3+2]];
+            var key=vert[0]+" "+vert[1]+" "+vert[2];
+          
+            if(!(key in indsByVert)) {
+                indsByVert[key]=vertsOut.length/3;
+                vertsOut.push(vert[0]);
+                vertsOut.push(vert[1]);
+                vertsOut.push(vert[2]);
+            }
+            
+            inds[i]=indsByVert[key];
+        }
+        
+        //
+        return vertsOut;
+    }
 
-function generateSideVertsInds(verts,inds) {
+    shdvolgen.cleanVertsInds=(verts,inds)=>{
+        inds=removeTinyTriangles(verts,inds);
+        verts=roundVerts(verts);
+        verts=removeDuplVerts(verts,inds);
+        return {"vertices":verts,"indices":inds};
+    }
+})();
+
+
+shdvolgen.generateEdgeGeometry=(verts,inds)=>{
     //get edges
     var edges={}; //key : [ind0,ind1,halfEdges0,halfEdges1]
     
@@ -174,9 +178,9 @@ function generateSideVertsInds(verts,inds) {
     }
     
     return {"vertices":vertsOut,"indices":indsOut,"line_indices":lineIndsOut};
-    
 }
-function generateCapVertsInds(verts,inds) {
+
+shdvolgen.generateCapGeometry(verts,inds)=>{
     var vertsOut=[];
     
     var indsOut=[];
