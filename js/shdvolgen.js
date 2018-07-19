@@ -66,7 +66,7 @@ var shdvolgen=shdvolgen||{};
         return vertsOut;
     }
 
-    shdvolgen.cleanVertsInds=(verts,inds)=>{
+    shdvolgen.cleanGeometry=(verts,inds)=>{
         inds=removeTinyTriangles(verts,inds);
         verts=roundVerts(verts);
         verts=removeDuplVerts(verts,inds);
@@ -180,7 +180,7 @@ shdvolgen.generateEdgeGeometry=(verts,inds)=>{
     return {"vertices":vertsOut,"indices":indsOut,"line_indices":lineIndsOut};
 }
 
-shdvolgen.generateCapGeometry(verts,inds)=>{
+shdvolgen.generateCapGeometry=(verts,inds)=>{
     var vertsOut=[];
     
     var indsOut=[];

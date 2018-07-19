@@ -97,7 +97,7 @@ function doMesh(posData,norData,texData,indData) {
 }
 
 function doShadowMesh(verts,inds) {
-    var cleanedGeom=shdvolgen.cleanVertsInds(verts,inds)
+    var cleanedGeom=shdvolgen.cleanGeometry(verts,inds)
     
     var capGeom=shdvolgen.generateCapGeometry(cleanedGeom.vertices,cleanedGeom.indices);
     var edgeGeom=shdvolgen.generateEdgeGeometry(cleanedGeom.vertices,cleanedGeom.indices);
