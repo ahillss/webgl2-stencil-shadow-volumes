@@ -40,9 +40,8 @@ function loadTexture2d(gl,fn,internalFormat,format,type,clamp,linear,mipmap) {
     });
 }
 
-function loadTextureCube(gl,px,nx,py,ny,pz,nz) {
-    var p=Promise.all([loadImage(px),loadImage(nx),loadImage(py),loadImage(ny),loadImage(nz),loadImage(nz)]);
-    return p.then(function (imgs) {
+function loadTextureCube(gl,fns,linear,mipmap) {
+    return Promise.all(fns.map(x=>loadImage(x))).then(function (imgs) {
         var tex=gl.createTexture();
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, tex);
 
@@ -58,10 +57,14 @@ function loadTextureCube(gl,px,nx,py,ny,pz,nz) {
         glTexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         glTexParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
 
-        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);//LINEAR_MIPMAP_LINEAR
-
-        // gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+        gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_MAG_FILTER,linear?gl.LINEAR:gl.NEAREST);
+        
+        if(mipmap) {
+            gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_MIN_FILTER,linear?gl.LINEAR_MIPMAP_LINEAR:gl.NEAREST_MIPMAP_NEAREST);
+            gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+        } else {
+            gl.texParameteri(gl.TEXTURE_CUBE_MAP,gl.TEXTURE_MIN_FILTER,linear?gl.LINEAR:gl.NEAREST);
+        }
 
         return Promise.resolve(tex);
     });

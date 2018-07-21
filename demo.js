@@ -236,9 +236,9 @@ function onInit2() {
 
     //
 
-    loadTexture2d(gl,"models/grid.png",gl.RGB, gl.RGB, gl.UNSIGNED_BYTE,false,true,true).then(function(tex) {
-        groundMtrl.colTex=tex;
-    },log);
+    //loadTexture2d(gl,"models/grid.png",gl.RGB, gl.RGB, gl.UNSIGNED_BYTE,false,true,true).then(function(tex) {
+    //    groundMtrl.colTex=tex;
+    //},log);
 
     //
     mygl.getProgram(gl,"shaders/shdvoledge.vs","shaders/shdvoledge.fs").then(function(prog) {shadowEdgeProg=prog;},log);
