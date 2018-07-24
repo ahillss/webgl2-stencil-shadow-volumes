@@ -5,9 +5,6 @@ layout(location=0) in vec2 a_pos;
 uniform mat4 u_projMat;
 uniform mat4 u_modelViewMat;
 
-// uniform mat4 u_modelViewProjMat;
-
-
 out vec2 v_tex;
 
 void main() {

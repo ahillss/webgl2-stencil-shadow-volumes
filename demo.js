@@ -5,12 +5,9 @@ var mymenu;
 
 var billboardProg,lightProg,ambientProg,shadowEdgeProg,shadowCapProg;
 
-
 var projMat=mat4.create();
-var infProjMat=mat4.create();
 var viewMat=mat4.create();
 var viewProjMat=mat4.create();
-var viewInfProjMat=mat4.create();
 
 
 var blaMat=mat4.create();
@@ -67,7 +64,7 @@ var updateBarTime=(function(){
     });
 })();
 
-function calcObjTransform(obj,projMat,infProjMat,viewMat) {
+function calcObjTransform(obj,projMat,viewMat) {
     if(obj.invModelMat) {
         mat4.invert(obj.invModelMat,obj.modelMat); //invModelMat
     }
@@ -81,10 +78,6 @@ function calcObjTransform(obj,projMat,infProjMat,viewMat) {
 
         if(obj.modelViewProjMat) {
             mat4.multiply(obj.modelViewProjMat,projMat,obj.modelViewMat); //modelViewProjMat
-        }
-
-        if(obj.modelViewInfProjMat) {
-            mat4.multiply(obj.modelViewInfProjMat,infProjMat,obj.modelViewMat); //modelViewInfProjMat
         }
     }
 }
@@ -188,8 +181,7 @@ function createSceneObject() {
         "invModelMat" : mat4.create(),
         "modelViewMat" : mat4.create(),
         "normalMat" : mat3.create(),
-        "modelViewProjMat" : mat4.create(),
-        "modelViewInfProjMat" : mat4.create()
+        "modelViewProjMat" : mat4.create()
     };
 }
 
@@ -351,7 +343,6 @@ function drawBillboard(obj) {
 
 }
 
-
 function onRender(curTime) {
     //
 
@@ -361,10 +352,8 @@ function onRender(curTime) {
     var zFar=100.0;
     var fovy=Math.PI/4.0;
 
-    mat4_perspective_fovy_inf(infProjMat,fovy,aspect,zNear);
-
-    mat4_perspective_fovy(projMat,fovy,aspect,zNear,zFar);
-
+    mat4.perspective(projMat,fovy,aspect,zNear);
+    
     //
     scene.light.pos[0]=mymenu.lightX;
     scene.light.pos[1]=mymenu.lightY;
@@ -403,17 +392,17 @@ function onRender(curTime) {
     mat4.translate(scene.light.modelMat,scene.light.modelMat,scene.light.pos);
 
     //
-    calcObjTransform(scene.teapot,projMat,infProjMat,viewMat);
-    calcObjTransform(scene.ground,projMat,infProjMat,viewMat);
-    calcObjTransform(scene.light,projMat,infProjMat,viewMat);
+    calcObjTransform(scene.teapot,projMat,viewMat);
+    calcObjTransform(scene.ground,projMat,viewMat);
+    calcObjTransform(scene.light,projMat,viewMat);
 
     mat4.multiply(viewProjMat,projMat,viewMat);
-    mat4.multiply(viewInfProjMat,infProjMat,viewMat);
 
 
     //
-    mygl.uniformMatrix4fv(gl,"u_projMat",false,infProjMat);
-    mygl.uniformMatrix4fv(gl,"u_viewProjMat",false,viewInfProjMat);
+    mygl.uniformMatrix4fv(gl,"u_projMat",false,projMat);
+    mygl.uniformMatrix4fv(gl,"u_viewMat",false,viewMat);
+    mygl.uniformMatrix4fv(gl,"u_viewProjMat",false,viewProjMat);
 
 
 
