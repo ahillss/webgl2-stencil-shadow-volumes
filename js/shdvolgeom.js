@@ -1,4 +1,4 @@
-var shdvolgen=shdvolgen||{};
+var shdvolgeom=shdvolgeom||{};
 
 (()=>{
     function calcTriangleArea(p0,p1,p2) {
@@ -66,7 +66,7 @@ var shdvolgen=shdvolgen||{};
         return vertsOut;
     }
 
-    shdvolgen.cleanGeometry=(verts,inds)=>{
+    shdvolgeom.clean=(verts,inds)=>{
         inds=removeTinyTriangles(verts,inds);
         verts=roundVerts(verts);
         verts=removeDuplVerts(verts,inds);
@@ -75,7 +75,7 @@ var shdvolgen=shdvolgen||{};
 })();
 
 
-shdvolgen.generateEdgeGeometry=(verts,inds)=>{
+shdvolgeom.genEdges=(verts,inds)=>{
     //get edges
     var edges={}; //key : [ind0,ind1,halfEdges0,halfEdges1]
     
@@ -180,7 +180,7 @@ shdvolgen.generateEdgeGeometry=(verts,inds)=>{
     return {"vertices":vertsOut,"indices":indsOut,"line_indices":lineIndsOut};
 }
 
-shdvolgen.generateCapGeometry=(verts,inds)=>{
+shdvolgeom.genCaps=(verts,inds)=>{
     var vertsOut=[];
     
     var indsOut=[];

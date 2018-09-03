@@ -1,0 +1,85 @@
+
+    /*var viewProjMat=lib.from(projMat).from(viewMat).mat;
+    var teapotMat=lib.translate([0,2,0]).scale([1,1,1]).from(blargNode).mat;
+    var teapotInvMat=lib.from(teapotMat).invert().mat;
+    var teapotViewMat=lib.from(viewMat).from(teapotMat);
+    var teapotNormalMat=lib.from(teapotViewMat).normal().mat;
+    
+    (mul (translate 0 2 0) (scale 1 1 1) blarg)
+    
+    
+    var viewProjMat=Mat4(projMat).from(viewMat).mat;
+    var teapotMat=lib.translate([0,2,0]).scale([1,1,1]).from(blargNode).mat;
+    var teapotInvMat=Mat4(teapotMat).invert().mat;
+    var teapotViewMat=Mat4(viewMat).from(teapotMat);
+    var teapotNormalMat=Mat4(teapotViewMat).normal().mat;
+    
+    
+    
+    
+    var viewProjMat=mat4.from(projMat).from(viewMat).get();
+    var teapotMat=mat4.translate([0,2,0]).scale([1,1,1]).from(blargNode).get();
+    var teapotInvMat=mat4.from(teapotMat).invert().get();
+    var teapotViewMat=mat4.from(viewMat).from(teapotMat).get();
+    var teapotNormalMat=mat4.from(teapotViewMat).normal().get();
+    
+    
+    mat4.from(projMat).from(viewMat).set(viewProjMat);
+    mat4.translate([0,2,0]).scale([1,1,1]).from(blargNode).set(teapotMat);
+    mat4.from(teapotMat).invert().set(teapotInvMat);
+    mat4.from(viewMat).from(teapotMat).set(teapotViewMat);
+    mat4.from(teapotViewMat).normal().set(teapotNormalMat);
+    
+    
+    mat4
+        .from(projMat)
+        .from(viewMat)
+        .set(viewProjMat);
+        
+    mat4
+        .translate([0,2,0])
+        .scale([1,1,1])
+        .from(blargNode)
+        .set(teapotMat);
+        
+    mat4.from(teapotMat).invert().set(teapotInvMat);
+    mat4.from(viewMat).from(teapotMat).set(teapotViewMat);
+    mat4.from(teapotViewMat).normal().set(teapotNormalMat);
+    
+    var projNode=scene.from(projMat);
+    var viewNode=scene.from(viewMat);
+    var viewProjNode=projNode.child(viewNode);
+    
+
+    var teapotNode=scene.translate([0,2,0]).scale([1,1,1]).child(blargNode);
+    var teapotViewNode=viewNode.child(teapotNode);
+    
+    teapot={
+        "modelMat":teapotNode.mat,
+        "invModelMat":teapotNode.invert().mat,
+        "modelViewProjMat":viewProjNode.child(teapotNode).mat,
+        "modelViewMat":teapotViewNode.mat,
+        "normalMat":teapotViewNode.toNormalMat3(),
+    };*/
+
+
+                    //var aaa=mat4.clone(viewMat);
+                    ////mat4.copy(aaa,viewMat);
+                    //aaa[12]=aaa[13]=aaa[14]=0.0;
+                    //mat4.transpose(aaa,aaa);
+                    //mat4.rotateY(aaa,aaa,event.movementX*0.01);
+                    //mat4.rotateX(aaa,aaa,event.movementY*0.01);
+                    
+                    
+                    /*
+                    xAxisAngle[0]=viewMat[0];
+                    xAxisAngle[1]=viewMat[4];
+                    xAxisAngle[2]=viewMat[8];
+                    xAxisAngle[3]=event.movementY*0.01;
+                    
+                    yAxisAngle[0]=viewMat[1];
+                    yAxisAngle[1]=viewMat[5];
+                    yAxisAngle[2]=viewMat[9];
+                    yAxisAngle[3]=event.movementX*0.01;
+                    
+                    theThing.calc();*/
