@@ -34,6 +34,7 @@ mygl.syncDrawStates=(gl)=>{
 
     gl.myDrawStates["dither"]=gl.getParameter(gl.DITHER);
     gl.myDrawStates["scissor_test"]=gl.getParameter(gl.SCISSOR_TEST);
+    gl.myDrawStates["rasterizer_discard"]=gl.getParameter(gl.RASTERIZER_DISCARD);
 
     //
     gl.myDrawStates["blend_color"]=gl.getParameter(gl.BLEND_COLOR);
@@ -94,11 +95,93 @@ mygl.syncDrawStates=(gl)=>{
     gl.myDrawStates["scissor_box"]=gl.getParameter(gl.SCISSOR_BOX);
 
     //lineWidth
-    gl.myDrawStates["line_width"]=gl.getParameter(gl.LINE_WIDTH);
+    gl.myDrawStates["line_width"]=gl.getParameter(gl.LINE_WIDTH);    
 }
 
-(()=>{
-    function setToState(gl,toStates,inputStates,clear,stateName,altStateName,defaultVal) {
+mygl.setDrawStates=(gl,clear,inputStates)=>{
+    gl.myDrawStates=gl.myDrawStates||{};
+
+    var toSetStates=[
+        ["blend",false,false],
+        ["blend_color",false,[0,0,0,0]],
+        ["blend_equation_rgb","blend_equation",gl.FUNC_ADD],
+        ["blend_equation_alpha","blend_equation",gl.FUNC_ADD],
+        ["blend_src_rgb","blend_src",gl.ONE],
+        ["blend_src_alpha","blend_src",gl.ONE],
+        ["blend_dst_rgb","blend_dst",gl.ZERO],
+        ["blend_dst_alpha","blend_dst",gl.ZERO],
+        ["color_writemask",false,[true,true,true,true]],
+        ["cull_face",false,false],
+        ["cull_face_mode",false,gl.BACK],
+        ["depth_test",false,false],
+        ["depth_func",false,gl.LESS],
+        ["depth_writemask",false,true],
+        ["depth_range",false,[0,1]],
+        ["dither",false,true],
+        ["front_face",false,gl.CCW],
+        ["line_width",false,1],
+        ["polygon_offset_fill",false,false],
+        ["polygon_offset_factor",false,0],
+        ["polygon_offset_units",false,0],
+        ["rasterizer_discard",false,false],
+        ["scissor_test",false,false],
+        ["scissor_box",false,[0,0,0,0]],
+        ["stencil_test",false,false],
+        ["stencil_back_func","stencil_func",gl.ALWAYS],
+        ["stencil_back_ref","stencil_ref",0],
+        ["stencil_back_valuemask","stencil_valuemask",0xffffffff],
+        ["stencil_back_writemask","stencil_writemask",0xffffffff],
+        ["stencil_back_pass_depth_fail","stencil_pass_depth_fail",gl.KEEP],
+        ["stencil_back_pass_depth_pass","stencil_pass_depth_pass",gl.KEEP],
+        ["stencil_back_fail","stencil_fail",gl.KEEP],
+        ["stencil_front_func","stencil_func",gl.ALWAYS],
+        ["stencil_front_ref","stencil_ref",0],
+        ["stencil_front_valuemask","stencil_valuemask",0xffffffff],
+        ["stencil_front_writemask","stencil_writemask",0xffffffff],
+        ["stencil_front_pass_depth_fail","stencil_pass_depth_fail",gl.KEEP],
+        ["stencil_front_pass_depth_pass","stencil_pass_depth_pass",gl.KEEP],
+        ["stencil_front_fail","stencil_fail",gl.KEEP]];
+
+    var setArrayStates=[
+        [gl.blendColor,"blend_color","blend"],
+        [gl.colorMask,"color_writemask",false],
+        [gl.depthRange,"depth_range","depth_test"],
+        [gl.scissor,"scissor_box","scissor_test"]];
+
+    var setParamStates=[
+        [gl.blendEquationSeparate,["blend_equation_rgb","blend_equation_alpha"],false,"blend"],
+        [gl.blendFuncSeparate,["blend_src_rgb","blend_dst_rgb","blend_src_alpha","blend_dst_alpha"],false,"blend"],
+        [gl.cullFace,["cull_face_mode"],false,"cull_face"],
+        [gl.depthFunc,["depth_func"],false,"depth_test"],
+        [gl.depthMask,["depth_writemask"],false,"depth_test"],
+        [gl.frontFace,["front_face"],false,false],
+        [gl.lineWidth,["line_width"],false,false],
+        [gl.polygonOffset,["polygon_offset_factor","polygon_offset_units"],false,"polygon_offset_fill"],
+        [gl.stencilFuncSeparate,["stencil_front_func","stencil_front_ref","stencil_front_valuemask"],gl.FRONT,"stencil_test"],
+        [gl.stencilFuncSeparate,["stencil_back_func","stencil_back_ref","stencil_back_valuemask"],gl.BACK,"stencil_test"],
+        [gl.stencilMaskSeparate,["stencil_front_writemask"],gl.FRONT,"stencil_test"],
+        [gl.stencilMaskSeparate,["stencil_back_writemask"],gl.BACK,"stencil_test"],
+        [gl.stencilOpSeparate,["stencil_front_fail","stencil_front_pass_depth_fail","stencil_front_pass_depth_pass"],gl.FRONT,"stencil_test"],
+        [gl.stencilOpSeparate,["stencil_back_fail","stencil_back_pass_depth_fail","stencil_back_pass_depth_pass"],gl.BACK,"stencil_test"]];
+
+    var setBoolStates=[
+        [gl.BLEND,"blend"],
+        [gl.CULL_FACE,"cull_face"],
+        [gl.DEPTH_TEST,"depth_test"],
+        [gl.DITHER,"dither"],
+        [gl.POLYGON_OFFSET_FILL,"polygon_offset_fill"],
+        [gl.RASTERIZER_DISCARD,"rasterizer_discard"],
+        [gl.SCISSOR_TEST,"scissor_test"],
+        [gl.STENCIL_TEST,"stencil_test"]];
+        
+    //set values to update with
+    var toStates={};
+    
+    for(var i=0;i<toSetStates.length;i++) {
+        var stateName=toSetStates[i][0];
+        var altStateName=toSetStates[i][1];
+        var defaultVal=toSetStates[i][2];
+        
         if(inputStates[stateName]!=undefined) {
             toStates[stateName]=inputStates[stateName];
         } else if(altStateName!==false && inputStates[altStateName]!=undefined) {
@@ -110,29 +193,23 @@ mygl.syncDrawStates=(gl)=>{
         }
     }
 
-    function setBoolState(gl,toStates,enumVal,stateName) {
-        if(toStates[stateName]!=gl.myDrawStates[stateName]) {
-            gl.myDrawStates[stateName]=toStates[stateName];
-            if(toStates[stateName]) {
-                gl.enable(enumVal);
-            } else {
-                gl.disable(enumVal);
-            }
-        }
-    }
-
-    function setArrayState(gl,toStates,func,stateName,required) {
-        if(required!==false && toStates[required]===false) {
-            return;
-        }
-
+    //set states
+    
+    for(var i=0;i<setArrayStates.length;i++) {
+        var func=setArrayStates[i][0];
+        var stateName=setArrayStates[i][1];
+        var required=setArrayStates[i][2];
         var update=false;
+        
+        if(required!==false && toStates[required]===false) {
+            continue;
+        }
 
         if(gl.myDrawStates[stateName]==undefined) {
             update=true;
         } else {
-            for(var i=0;i<toStates[stateName].length;i++) {
-                if(gl.myDrawStates[stateName][i]!=toStates[stateName][i]) {
+            for(var j=0;j<toStates[stateName].length;j++) {
+                if(gl.myDrawStates[stateName][j]!=toStates[stateName][j]) {
                     update=true;
                     break;
                 }
@@ -140,24 +217,27 @@ mygl.syncDrawStates=(gl)=>{
         }
 
         if(!update) {
-            return;
+            continue;
         }
 
-
         gl.myDrawStates[stateName]=toStates[stateName].slice();
-
         func.apply(gl,toStates[stateName]);
     }
 
-    function setParamState(gl,toStates,func,stateNames,pre,required) {
+    for(var i=0;i<setParamStates.length;i++) {
+        var func=setParamStates[i][0];
+        var stateNames=setParamStates[i][1];
+        var pre=setParamStates[i][2];
+        var required=setParamStates[i][3];
+        
         if(required!==false && toStates[required]===false) {
-            return;
+            continue;
         }
 
         var update=false;
 
-        for(var i=0;i<stateNames.length;i++) {
-            var stateName=stateNames[i];
+        for(var j=0;j<stateNames.length;j++) {
+            var stateName=stateNames[j];
 
             if(gl.myDrawStates[stateName] != toStates[stateName]) {
                 update=true;
@@ -166,11 +246,11 @@ mygl.syncDrawStates=(gl)=>{
         }
 
         if(!update) {
-            return;
+            continue;
         }
 
-        for(var i=0;i<stateNames.length;i++) {
-            gl.myDrawStates[stateNames[i]] = toStates[stateNames[i]];
+        for(var j=0;j<stateNames.length;j++) {
+            gl.myDrawStates[stateNames[j]] = toStates[stateNames[j]];
         }
 
         var params=stateNames.map(x => toStates[x]);
@@ -182,328 +262,155 @@ mygl.syncDrawStates=(gl)=>{
         func.apply(gl,params);
     }
         
-    mygl.setDrawStates=(gl,clear,inputStates)=>{
-        gl.myDrawStates=gl.myDrawStates||{};
-        var toStates={};
-
-        //set values to update with
-        setToState(gl,toStates,inputStates,clear,"blend",false,false);
-        setToState(gl,toStates,inputStates,clear,"blend_color",false,[0,0,0,0]);
-        setToState(gl,toStates,inputStates,clear,"blend_equation_rgb","blend_equation",gl.FUNC_ADD);
-        setToState(gl,toStates,inputStates,clear,"blend_equation_alpha","blend_equation",gl.FUNC_ADD);
-        setToState(gl,toStates,inputStates,clear,"blend_src_rgb","blend_src",gl.ONE);
-        setToState(gl,toStates,inputStates,clear,"blend_src_alpha","blend_src",gl.ONE);
-        setToState(gl,toStates,inputStates,clear,"blend_dst_rgb","blend_dst",gl.ZERO);
-        setToState(gl,toStates,inputStates,clear,"blend_dst_alpha","blend_dst",gl.ZERO);
-
-        setToState(gl,toStates,inputStates,clear,"cull_face",false,false);
-        setToState(gl,toStates,inputStates,clear,"cull_face_mode",false,gl.BACK);
-        setToState(gl,toStates,inputStates,clear,"front_face",false,gl.CCW);
-
-        setToState(gl,toStates,inputStates,clear,"depth_test",false,false);
-        setToState(gl,toStates,inputStates,clear,"depth_func",false,gl.LESS);
-        setToState(gl,toStates,inputStates,clear,"depth_writemask",false,true);
-        setToState(gl,toStates,inputStates,clear,"depth_range",false,[0,1]);
-
-        setToState(gl,toStates,inputStates,clear,"polygon_offset_fill",false,false);
-        setToState(gl,toStates,inputStates,clear,"polygon_offset_factor",false,0);
-        setToState(gl,toStates,inputStates,clear,"polygon_offset_units",false,0);
-
-        setToState(gl,toStates,inputStates,clear,"stencil_test",false,false);
-        setToState(gl,toStates,inputStates,clear,"stencil_back_func","stencil_func",gl.ALWAYS);
-        setToState(gl,toStates,inputStates,clear,"stencil_back_ref","stencil_ref",0);
-        setToState(gl,toStates,inputStates,clear,"stencil_back_valuemask","stencil_valuemask",0xffffffff);
-        setToState(gl,toStates,inputStates,clear,"stencil_back_writemask","stencil_writemask",0xffffffff);
-        setToState(gl,toStates,inputStates,clear,"stencil_back_pass_depth_fail","stencil_pass_depth_fail",gl.KEEP);
-        setToState(gl,toStates,inputStates,clear,"stencil_back_pass_depth_pass","stencil_pass_depth_pass",gl.KEEP);
-        setToState(gl,toStates,inputStates,clear,"stencil_back_fail","stencil_fail",gl.KEEP);
-        setToState(gl,toStates,inputStates,clear,"stencil_front_func","stencil_func",gl.ALWAYS);
-        setToState(gl,toStates,inputStates,clear,"stencil_front_ref","stencil_ref",0);
-        setToState(gl,toStates,inputStates,clear,"stencil_front_valuemask","stencil_valuemask",0xffffffff);
-        setToState(gl,toStates,inputStates,clear,"stencil_front_writemask","stencil_writemask",0xffffffff);
-        setToState(gl,toStates,inputStates,clear,"stencil_front_pass_depth_fail","stencil_pass_depth_fail",gl.KEEP);
-        setToState(gl,toStates,inputStates,clear,"stencil_front_pass_depth_pass","stencil_pass_depth_pass",gl.KEEP);
-        setToState(gl,toStates,inputStates,clear,"stencil_front_fail","stencil_fail",gl.KEEP);
-
-        setToState(gl,toStates,inputStates,clear,"scissor_test",false,false);
-        setToState(gl,toStates,inputStates,clear,"scissor_box",false,[0,0,0,0]);
-
-        setToState(gl,toStates,inputStates,clear,"dither",false,true);
-        setToState(gl,toStates,inputStates,clear,"color_writemask",false,[true,true,true,true]);
-        setToState(gl,toStates,inputStates,clear,"line_width",false,1);
-
-        //set gl states
-        setBoolState(gl,toStates,gl.DEPTH_TEST,"depth_test");
-        setParamState(gl,toStates,gl.depthFunc,["depth_func"],false,"depth_test");
-        setParamState(gl,toStates,gl.depthMask,["depth_writemask"],false,"depth_test");
-        setArrayState(gl,toStates,gl.depthRange,"depth_range","depth_test");
-
-        setBoolState(gl,toStates,gl.BLEND,"blend");
-        setArrayState(gl,toStates,gl.blendColor,"blend_color","blend");
-        setParamState(gl,toStates,gl.blendEquationSeparate,["blend_equation_rgb","blend_equation_alpha"],false,"blend");
-        setParamState(gl,toStates,gl.blendFuncSeparate,["blend_src_rgb","blend_dst_rgb","blend_src_alpha","blend_dst_alpha"],false,"blend");
-
-        setBoolState(gl,toStates,gl.STENCIL_TEST,"stencil_test");
-        setParamState(gl,toStates,gl.stencilFuncSeparate,["stencil_front_func","stencil_front_ref","stencil_front_valuemask"],gl.FRONT,"stencil_test");
-        setParamState(gl,toStates,gl.stencilFuncSeparate,["stencil_back_func","stencil_back_ref","stencil_back_valuemask"],gl.BACK,"stencil_test");
-        setParamState(gl,toStates,gl.stencilMaskSeparate,["stencil_front_writemask"],gl.FRONT,"stencil_test");
-        setParamState(gl,toStates,gl.stencilMaskSeparate,["stencil_back_writemask"],gl.BACK,"stencil_test");
-        setParamState(gl,toStates,gl.stencilOpSeparate,["stencil_front_fail","stencil_front_pass_depth_fail","stencil_front_pass_depth_pass"],gl.FRONT,"stencil_test");
-        setParamState(gl,toStates,gl.stencilOpSeparate,["stencil_back_fail","stencil_back_pass_depth_fail","stencil_back_pass_depth_pass"],gl.BACK,"stencil_test");
-
-        setBoolState(gl,toStates,gl.CULL_FACE,"cull_face");
-        setParamState(gl,toStates,gl.cullFace,["cull_face_mode"],false,"cull_face");
-        setParamState(gl,toStates,gl.frontFace,["front_face"],false,false);
-
-        setBoolState(gl,toStates,gl.POLYGON_OFFSET_FILL,"polygon_offset_fill");
-        setParamState(gl,toStates,gl.polygonOffset,["polygon_offset_factor","polygon_offset_units"],false,"polygon_offset_fill");
-
-        setBoolState(gl,toStates,gl.SCISSOR_TEST,"scissor_test");
-        setArrayState(gl,toStates,gl.scissor,"scissor_box","scissor_test");
-
-        setBoolState(gl,toStates,gl.DITHER,"dither");
-        setArrayState(gl,toStates,gl.colorMask,"color_writemask",false);
-        setParamState(gl,toStates,gl.lineWidth,["line_width"],false,false);
+    for(var i=0;i<setBoolStates.length;i++) {
+        var enumVal=setBoolStates[i][0];
+        var stateName=setBoolStates[i][1];
+        
+        if(toStates[stateName]!=gl.myDrawStates[stateName]) {
+            gl.myDrawStates[stateName]=toStates[stateName];
+            
+            if(toStates[stateName]) {
+                gl.enable(enumVal);
+            } else {
+                gl.disable(enumVal);
+            }
+        }
     }
-})();
+}
 
 
 //
 
-mygl.uniform1i=(gl,n,v0)=>{
+mygl.setUniform=(gl,f,n,...v)=>{
+    v[v.length-1]=(Array.isArray(v[v.length-1]))?v[v.length-1].slice(0):v[v.length-1];
     gl.myUniforms=gl.myUniforms||[{}];
-    gl.myUniforms[gl.myUniforms.length-1][n]={"func":(function(loc){gl.uniform1i(loc,v0);}),"id":{"type":"1i","value":v0}};
+    gl.myUniforms[gl.myUniforms.length-1][n]={"func":f,"val":v,"id":{}};
 }
 
-mygl.uniform1f=(gl,n,v0)=>{
+mygl.applyUniforms=(gl,prog)=>{
     gl.myUniforms=gl.myUniforms||[{}];
-    gl.myUniforms[gl.myUniforms.length-1][n]={"func":(function(loc){gl.uniform1f(loc,v0);}),"id":{}};
-}
+    prog.myUniforms=prog.myUniforms||{};
 
-mygl.uniform2f=(gl,n,v0,v1)=>{
-    gl.myUniforms=gl.myUniforms||[{}];
-    gl.myUniforms[gl.myUniforms.length-1][n]={"func":(function(loc){gl.uniform2f(loc,v0,v1);}),"id":{}};
-}
-
-mygl.uniform3f=(gl,n,v0,v1,v2)=>{
-    gl.myUniforms=gl.myUniforms||[{}];
-    gl.myUniforms[gl.myUniforms.length-1][n]={"func":(function(loc){gl.uniform3f(loc,v0,v1,v2);}),"id":{}};
-}
-
-mygl.uniform4f=(gl,n,v0,v1,v2,v3)=>{
-    gl.myUniforms=gl.myUniforms||[{}];
-    gl.myUniforms[gl.myUniforms.length-1][n]={"func":(function(loc){gl.uniform4f(loc,v0,v1,v2,v3);}),"id":{}};
-}
-
-mygl.uniform2fv=(gl,n,v)=>{
-    v=new Float32Array(v);
-    gl.myUniforms=gl.myUniforms||[{}];
-    gl.myUniforms[gl.myUniforms.length-1][n]={"func":(function(loc){gl.uniform2fv(loc,v);}),"id":{}};
-}
-
-mygl.uniform3fv=(gl,n,v)=>{
-    v=new Float32Array(v);
-    gl.myUniforms=gl.myUniforms||[{}];
-    gl.myUniforms[gl.myUniforms.length-1][n]={"func":(function(loc){gl.uniform3fv(loc,v);}),"id":{}};
-}
-
-mygl.uniform4fv=(gl,n,v)=>{
-    v=new Float32Array(v);
-    gl.myUniforms=gl.myUniforms||[{}];
-    gl.myUniforms[gl.myUniforms.length-1][n]={"func":(function(loc){gl.uniform4fv(loc,v);}),"id":{}};
-}
-
-mygl.uniformMatrix3fv=(gl,n,t,v)=>{
-    v=new Float32Array(v);
-    gl.myUniforms=gl.myUniforms||[{}];
-    gl.myUniforms[gl.myUniforms.length-1][n]={"func":(function(loc){gl.uniformMatrix3fv(loc,t,v);}),"id":{}};
-}
-
-mygl.uniformMatrix4fv=(gl,n,t,v)=>{
-    v=new Float32Array(v);
-    gl.myUniforms=gl.myUniforms||[{}];
-    gl.myUniforms[gl.myUniforms.length-1][n]={"func":(function(loc){gl.uniformMatrix4fv(loc,t,v);}),"id":{}};
+    for(var k in gl.myUniforms[gl.myUniforms.length-1]) {
+        prog.myUniforms[k]=prog.myUniforms[k]||{"loc":gl.getUniformLocation(prog,k), "func":null, "val":null, "id":{}};
+        var pp=prog.myUniforms[k];
+        var gg=gl.myUniforms[gl.myUniforms.length-1][k];
+        
+        if(pp.loc!=null && pp.id!=gg.id) {
+            //for samplers
+            if(gg.func==gl.uniform1i && pp.val && gg.val[0]==pp.val[0]) { 
+                continue
+            }
+            
+            //
+            gg.func.apply(gl,[pp.loc].concat(gg.val));
+            
+            //
+            pp.id=gg.id;
+            pp.func=gg.func;
+            pp.val=gg.val;
+        }
+    }
 }
 
 mygl.uniformsPush=(gl)=>{
     gl.myUniforms=gl.myUniforms||[{}];
-    var prev=gl.myUniforms[gl.myUniforms.length-1];
-    var vals={};
-    gl.myUniforms.push(vals);
-
-    for(k in prev) {
-        vals[k]=prev[k];
-    }
+    gl.myUniforms.push(Object.assign({},gl.myUniforms[gl.myUniforms.length-1]));
 }
 
 mygl.uniformsPop=(gl)=>{
     gl.myUniforms=gl.myUniforms||[{}];
-    if(gl.myUniforms.length>1) {
-        gl.myUniforms.pop();
-    }
+    if(gl.myUniforms.length>1) { gl.myUniforms.pop(); }
 }
 
-mygl.uniformsApply=(gl,prog)=>{
-    gl.myUniforms=gl.myUniforms||[{}];
-    prog.myUniforms=prog.myUniforms||{};
+//
 
-    var gVals=gl.myUniforms[gl.myUniforms.length-1];
-
-    for(var k in gVals) {
-        prog.myUniforms[k]=prog.myUniforms[k]||{"loc" : gl.getUniformLocation(prog,k), "id" : null};
-        var pVal=prog.myUniforms[k];
-        var gVal=gVals[k];
-        var pId=pVal["id"];
-        var gId=gVal["id"];
-
-        if(pVal["loc"] && (!pId || pId["type"]!="1i" || gId["type"]!="1i" || pId["value"]!=gId["value"]) && pId!=gId) {
-            gVal["func"](pVal["loc"]);
-            pVal["id"]=gId;
-        }
-    }
-}
-
-mygl.createVertBuf=(gl,data)=>{
+mygl.createVertBuf=(gl,data,usage)=>{
     var buf=gl.createBuffer();
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ARRAY_BUFFER,buf);
-    gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER,data,usage?usage:gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER,null);
     return buf;
 }
 
-mygl.createVertBufs=(gl,datas)=>{
-    return datas.map(data => mygl.createVertBuf(gl,data));
-}
-
-mygl.createIndBuf=(gl,data)=>{
+mygl.createIndBuf=(gl,data,usage)=>{
     var buf=gl.createBuffer();
     gl.bindVertexArray(null);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buf);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,data,gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,data,usage?usage:gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,null);
     return buf;
 }
 
-mygl.createVao=(gl,locs,sizes,types,vertBufs,indBuf)=>{
+mygl.createVao=(gl,locs,sizes,types,strides,offsets,vertBufs,indBuf,divisors)=>{
     var vao=gl.createVertexArray();
     gl.bindVertexArray(vao);
     
     for(var i=0;i<locs.length;i++) {
-        gl.bindBuffer(gl.ARRAY_BUFFER,vertBufs[i]);
-        gl.vertexAttribPointer(locs[i],sizes[i],types[i],false,0,0);
+        var stride=strides?strides[i]:0;
+        var offset=offsets?offsets[i]:0;
+        
+        if(vertBufs[i]) {
+            gl.bindBuffer(gl.ARRAY_BUFFER,vertBufs[i]);
+        }
+        
+        gl.vertexAttribPointer(locs[i],sizes[i],types[i],false,stride,offset);
+        
+        if(divisors) {
+            gl.vertexAttribDivisor(locs[i],divisors[i]);
+        }
+        
         gl.enableVertexAttribArray(locs[i]);
     }
     
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indBuf);    
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indBuf);
+    
     gl.bindVertexArray(null);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,null);
+    
     return vao;
 }
 
-mygl.createStridedVao=(gl,locs,sizes,types,stride,offsets,vertBuf,indBuf)=>{
-    var vao=gl.createVertexArray();
-    gl.bindVertexArray(vao);
-    gl.bindBuffer(gl.ARRAY_BUFFER,vertBuf);
-    
-    for(var i=0;i<locs.length;i++) {
-        gl.vertexAttribPointer(locs[i],sizes[i],types[i],false,stride,offsets[i]);
-        gl.enableVertexAttribArray(locs[i]);
+mygl.createShader=(gl,type,src,onError,onSuccess)=>{
+    var shader=gl.createShader(type);
+    gl.shaderSource(shader, src);
+    gl.compileShader(shader);
+
+    if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        onError(gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
     }
     
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,indBuf);    
-    gl.bindVertexArray(null);
-    return vao;
+    if(onSuccess) {
+        onSuccess(shader);
+    }
+
+    return shader;
 }
 
-(()=>{
-    function createShader(gl,key,type,src,onError) {
-        var shader=gl.createShader(type);
-        gl.shaderSource(shader, src);
-        gl.compileShader(shader);
-
-        if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            var msg=gl.getShaderInfoLog(shader);
-            onError(key + " : compile error.\n"+msg);
-            gl.deleteShader(shader);
-            return null;
-        }
-
-        return shader;
+mygl.createProgram=(gl,vs,fs,beforeLinkCallback,onError,onSuccess)=>{
+    var prog=gl.createProgram();
+    gl.attachShader(prog,vs);
+    gl.attachShader(prog,fs);
+    
+    if(beforeLinkCallback) {
+        beforeLinkCallback(prog);
     }
+    
+    gl.linkProgram(prog);
 
-    function createProgram(gl,key,vs,fs,onError) {
-        var prog=gl.createProgram();
-        gl.attachShader(prog,vs);
-        gl.attachShader(prog,fs);
-        gl.linkProgram(prog);
-
-        if(!gl.getProgramParameter(prog,gl.LINK_STATUS)) {
-            var msg=gl.getProgramInfoLog(prog);
-            onError(key + " : link error.\n"+msg);
-            gl.deleteProgram(prog);
-            return null;
-        }
-
-        return prog;
+    if(!gl.getProgramParameter(prog,gl.LINK_STATUS)) {
+        onError(gl.getProgramInfoLog(prog));
+        gl.deleteProgram(prog);
+        return null;
     }
-
-    function createShaderPromise(gl,key,type,src) {
-        return new Promise(function (resolve, reject) {
-            var errMsg;
-
-            var ret=createShader(gl,key,type,src,(e)=>{
-                errMsg=e;
-            });
-
-            if(!ret) {
-                reject(errMsg);
-            } else {
-                resolve(ret);
-            }
-        });
+    
+    if(onSuccess) {
+        onSuccess(prog);
     }
-
-    function createProgramPromise(gl,key,vs,fs) {
-        return new Promise(function (resolve, reject) {
-            var errMsg;
-            var ret=createProgram(gl,key,vs,fs,(e)=>{errMsg=e;});
-            if(!ret) {reject(errMsg); } else { resolve(ret); }
-        });
-    }
-
-    function getShader(gl,type,fn) {
-        var key=((type==gl.VERTEX_SHADER)?"v":"f")+":"+fn;
-        gl.myShaders=gl.myShaders||{};
-
-        if(key in gl.myShaders) {
-            return gl.myShaders[key];
-        }
-
-        var shader=loadText(fn).then((src)=>{
-            return createShaderPromise(gl,fn,type,src);
-        });
-
-        gl.myShaders[key]=shader;
-        return shader;
-    }
-
-    mygl.getProgram=(gl,vsName,fsName)=>{
-        var key=vsName+" + "+fsName;
-        gl.myPrograms=gl.myPrograms||{};
-
-        if(key in gl.myPrograms) {
-            return gl.myPrograms[key];
-        }
-
-        //
-        var vs=getShader(gl,gl.VERTEX_SHADER,vsName);
-        var fs=getShader(gl,gl.FRAGMENT_SHADER,fsName);
-
-        var prog=Promise.all([vs,fs]).then((result)=>{
-            return createProgramPromise(gl,key,result[0],result[1]);
-        });
-
-        gl.myPrograms[key]=prog;
-        return prog;
-    }
-})();
+    
+    return prog;
+}

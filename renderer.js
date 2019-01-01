@@ -1,8 +1,8 @@
 
 function doMesh(gl,posData,norData,indData) {
-    var vertBufs=mygl.createVertBufs(gl,[posData,norData].map(x=>Float32Array.from(x)));
+    var vertBufs=[posData,norData].map(x=>mygl.createVertBuf(gl,Float32Array.from(x)));
     var indBuf=mygl.createIndBuf(gl,Uint32Array.from(indData));
-    var vao=mygl.createVao(gl,[0,1],[3,3],[gl.FLOAT,gl.FLOAT],vertBufs,indBuf);
+    var vao=mygl.createVao(gl,[0,1],[3,3],[gl.FLOAT,gl.FLOAT],[0,0],[0,0],vertBufs,indBuf);
     return {"indsNum":indData.length,"vao":vao};
 }
 
@@ -18,13 +18,27 @@ function doShadowMesh(gl,verts,inds) {
     var edgeIndBuf=mygl.createIndBuf(gl,Uint32Array.from(edgeGeom.indices));   
     var capLineIndBuf=mygl.createIndBuf(gl,Uint32Array.from(capGeom.line_indices));
     var edgeLineIndBuf=mygl.createIndBuf(gl,Uint32Array.from(edgeGeom.line_indices));
-    
-    var capVao=mygl.createStridedVao(gl,[0,1,2],[3,3,3],[gl.FLOAT,gl.FLOAT,gl.FLOAT],9*4,[0,3,6].map(x=>x*4),capVertBuf,capIndBuf);
-    var edgeVao=mygl.createStridedVao(gl,[0,1,2,3],[3,3,3,3],[gl.FLOAT,gl.FLOAT,gl.FLOAT,gl.FLOAT],12*4,[0,3,6,9].map(x=>x*4),edgeVertBuf,edgeIndBuf);
-    var capLineVao=mygl.createStridedVao(gl,[0,1,2],[3,3,3],[gl.FLOAT,gl.FLOAT,gl.FLOAT],9*4,[0,3,6].map(x=>x*4),capVertBuf,capLineIndBuf);
-    var edgeLineVao=mygl.createStridedVao(gl,[0,1,2,3],[3,3,3,3],[gl.FLOAT,gl.FLOAT,gl.FLOAT,gl.FLOAT],12*4,[0,3,6,9].map(x=>x*4),edgeVertBuf,edgeLineIndBuf);
-    
+ 
+    var capVao=mygl.createVao(gl,
+        [0,1,2],[3,3,3],[gl.FLOAT,gl.FLOAT,gl.FLOAT],
+        (new Array(3)).fill(9*4),[0,3,6].map(x=>x*4),
+        [capVertBuf,null,null],capIndBuf);
 
+    var edgeVao=mygl.createVao(gl,
+        [0,1,2,3],[3,3,3,3],[gl.FLOAT,gl.FLOAT,gl.FLOAT,gl.FLOAT],
+        (new Array(4)).fill(12*4),[0,3,6,9].map(x=>x*4),
+        [edgeVertBuf,null,null,null],edgeIndBuf);
+
+    var capLineVao=mygl.createVao(gl,
+        [0,1,2],[3,3,3],[gl.FLOAT,gl.FLOAT,gl.FLOAT],
+        (new Array(3)).fill(9*4),[0,3,6].map(x=>x*4),
+        [capVertBuf,null,null],capLineIndBuf);
+
+    var edgeLineVao=mygl.createVao(gl,
+        [0,1,2,3],[3,3,3,3],[gl.FLOAT,gl.FLOAT,gl.FLOAT,gl.FLOAT],
+        (new Array(4)).fill(12*4),[0,3,6,9].map(x=>x*4),
+        [edgeVertBuf,null,null,null],edgeLineIndBuf);
+       
     return {
         "capVao":capVao,
         "edgeVao":edgeVao,
@@ -66,16 +80,16 @@ function drawObjectLit(gl,prog,obj,mesh,mtrl) {
     var shininess=(mtrl&&mtrl.shininess)?mtrl.shininess:0.5;
 
     //
-    mygl.uniformMatrix4fv(gl,"u_modelMat",false,obj.modelMat);
-    mygl.uniformMatrix4fv(gl,"u_modelViewMat",false,obj.modelViewMat);
-    mygl.uniformMatrix3fv(gl,"u_normalMat",false,obj.normalMat);
-    mygl.uniform1f(gl,"u_shininess",shininess);
+    mygl.setUniform(gl,gl.uniformMatrix4fv,"u_modelMat",false,obj.modelMat);
+    mygl.setUniform(gl,gl.uniformMatrix4fv,"u_modelViewMat",false,obj.modelViewMat);
+    mygl.setUniform(gl,gl.uniformMatrix3fv,"u_normalMat",false,obj.normalMat);
+    mygl.setUniform(gl,gl.uniform1f,"u_shininess",shininess);
 
-    mygl.uniform3fv(gl,"u_materialCol",col);
-    mygl.uniform1i(gl,"u_useTexture",(mtrl && mtrl.colTex!=undefined)?1:0);
+    mygl.setUniform(gl,gl.uniform3fv,"u_materialCol",col);
+    mygl.setUniform(gl,gl.uniform1i,"u_useTexture",(mtrl && mtrl.colTex!=undefined)?1:0);
 
     //
-    mygl.uniformsApply(gl,prog);
+    mygl.applyUniforms(gl,prog);
 
     //
     gl.drawElements(gl.TRIANGLES, mesh.indsNum, gl.UNSIGNED_INT, 0);
@@ -97,18 +111,16 @@ function drawObjectAmbientAndDepth(gl,prog,obj,mesh,mtrl) {
     }
 
     //
-
     gl.bindVertexArray(mesh.vao);
-
 
     var col=(mtrl&&mtrl.color)?mtrl.color:[1,1,1];
     //
-    mygl.uniformMatrix4fv(gl,"u_modelMat",false,obj.modelMat);
-    mygl.uniform3fv(gl,"u_materialCol",col.map(x=>x*0.6));
-    mygl.uniform1i(gl,"u_useTexture",(mtrl && mtrl.colTex!=undefined)?1:0);
+    mygl.setUniform(gl,gl.uniformMatrix4fv,"u_modelMat",false,obj.modelMat);
+    mygl.setUniform(gl,gl.uniform3fv,"u_materialCol",col.map(x=>x*0.6));
+    mygl.setUniform(gl,gl.uniform1i,"u_useTexture",(mtrl && mtrl.colTex!=undefined)?1:0);
 
     //
-    mygl.uniformsApply(gl,prog);
+    mygl.applyUniforms(gl,prog);
 
     //
     gl.drawElements(gl.TRIANGLES, mesh.indsNum, gl.UNSIGNED_INT, 0);
@@ -121,10 +133,10 @@ function drawBillboard(gl,prog,billboardMesh,obj) {
         return;
     }
 
-    mygl.uniformMatrix4fv(gl,"u_modelViewMat",false,obj.modelViewMat);
+    mygl.setUniform(gl,gl.uniformMatrix4fv,"u_modelViewMat",false,obj.modelViewMat);
 
     gl.useProgram(prog);
-    mygl.uniformsApply(gl,prog);
+    mygl.applyUniforms(gl,prog);
 
     gl.bindVertexArray(billboardMesh.vao);
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
@@ -138,21 +150,21 @@ function drawShadow(gl,capProg,edgeProg,obj,mesh,zfail) {
     }
 
     //
-    mygl.uniformMatrix4fv(gl,"u_modelViewMat",false,obj.modelViewMat);
-    mygl.uniformMatrix4fv(gl,"u_modelMat",false,obj.modelMat);
+    mygl.setUniform(gl,gl.uniformMatrix4fv,"u_modelViewMat",false,obj.modelViewMat);
+    mygl.setUniform(gl,gl.uniformMatrix4fv,"u_modelMat",false,obj.modelMat);
 
     //
     if(zfail) {
         gl.bindVertexArray(mesh.capVao);
         gl.useProgram(capProg);
-        mygl.uniformsApply(gl,capProg);
+        mygl.applyUniforms(gl,capProg);
         gl.drawElements(gl.TRIANGLES, mesh.capIndsNum, gl.UNSIGNED_INT, 0);
     }
 
     //
     gl.bindVertexArray(mesh.edgeVao);
     gl.useProgram(edgeProg);
-    mygl.uniformsApply(gl,edgeProg);
+    mygl.applyUniforms(gl,edgeProg);
     gl.drawElements(gl.TRIANGLES, mesh.edgeIndsNum, gl.UNSIGNED_INT, 0);
 }
 
@@ -162,21 +174,21 @@ function drawShadowWireframe(gl,capProg,edgeProg,obj,mesh,zfail) {
     }
 
     //
-    mygl.uniformMatrix4fv(gl,"u_modelViewMat",false,obj.modelViewMat);
-    mygl.uniformMatrix4fv(gl,"u_modelMat",false,obj.modelMat);
+    mygl.setUniform(gl,gl.uniformMatrix4fv,"u_modelViewMat",false,obj.modelViewMat);
+    mygl.setUniform(gl,gl.uniformMatrix4fv,"u_modelMat",false,obj.modelMat);
 
     //
     if(zfail) {
         gl.bindVertexArray(mesh.capLineVao);
         gl.useProgram(capProg);
-        mygl.uniformsApply(gl,capProg);
+        mygl.applyUniforms(gl,capProg);
         gl.drawElements(gl.LINES, mesh.capLineIndsNum, gl.UNSIGNED_INT, 0);
     }
 
     //
     gl.bindVertexArray(mesh.edgeLineVao);
     gl.useProgram(edgeProg);
-    mygl.uniformsApply(gl,edgeProg);
+    mygl.applyUniforms(gl,edgeProg);
     gl.drawElements(gl.LINES, mesh.edgeLineIndsNum, gl.UNSIGNED_INT, 0);
 }
 
@@ -185,7 +197,9 @@ function Renderer(canvas) {
     this.gl=mygl.createContext(canvas,{stencil: true,antialias: true,premultipliedAlpha: false, alpha: false});
     var gl=this.gl;
     
-    var billboardVao=mygl.createVao(gl,[0],[2],[gl.FLOAT],[mygl.createVertBuf(gl,Float32Array.from([-1,-1, 1,-1, -1,1 ,1,1]))],null);
+    var billboardVertBuf=mygl.createVertBuf(gl,Float32Array.from([-1,-1, 1,-1, -1,1 ,1,1]));
+    var billboardVao=mygl.createVao(gl,[0],[2],[gl.FLOAT],[0],[0],[billboardVertBuf]);
+    
     this.billboardMesh={"vao":billboardVao};
 
     
@@ -206,18 +220,18 @@ function Renderer(canvas) {
     //},log);
 
     //
-    mygl.getProgram(gl,"shaders/shdvoledge.vs","shaders/shdvoledge.fs").then(function(prog) {waa.shadowEdgeProg=prog;},log);
-    mygl.getProgram(gl,"shaders/shdvolcap.vs","shaders/shdvolcap.fs").then(function(prog) {waa.shadowCapProg=prog;},log);
+    mygl_old.getProgram(gl,"shaders/shdvoledge.vs","shaders/shdvoledge.fs").then(function(prog) {waa.shadowEdgeProg=prog;},log);
+    mygl_old.getProgram(gl,"shaders/shdvolcap.vs","shaders/shdvolcap.fs").then(function(prog) {waa.shadowCapProg=prog;},log);
 
-    mygl.getProgram(gl,"shaders/light.vs","shaders/light.fs").then(function(prog) {waa.lightProg=prog;},log);
-    mygl.getProgram(gl,"shaders/billboard.vs","shaders/billboard.fs").then(function(prog) {waa.billboardProg=prog;},log);
-    mygl.getProgram(gl,"shaders/ambient.vs","shaders/ambient.fs").then(function(prog) {waa.ambientProg=prog;},log);
+    mygl_old.getProgram(gl,"shaders/light.vs","shaders/light.fs").then(function(prog) {waa.lightProg=prog;},log);
+    mygl_old.getProgram(gl,"shaders/billboard.vs","shaders/billboard.fs").then(function(prog) {waa.billboardProg=prog;},log);
+    mygl_old.getProgram(gl,"shaders/ambient.vs","shaders/ambient.fs").then(function(prog) {waa.ambientProg=prog;},log);
 
     //
-    mygl.uniform3f(gl,"u_lightAtten",0.9,0.1,0.01);
-    mygl.uniform3f(gl,"u_lightCol",1.0,1.0,1.0);
-    mygl.uniform3f(gl,"u_ambientCol",0.5,0.5,0.5);
-    mygl.uniform1i(gl,"u_colMap",0);
+    mygl.setUniform(gl,gl.uniform3f,"u_lightAtten",0.9,0.1,0.01);
+    mygl.setUniform(gl,gl.uniform3f,"u_lightCol",1.0,1.0,1.0);
+    mygl.setUniform(gl,gl.uniform3f,"u_ambientCol",0.5,0.5,0.5);
+    mygl.setUniform(gl,gl.uniform1i,"u_colMap",0);
     
     //
     
@@ -228,9 +242,9 @@ function Renderer(canvas) {
 
 
 Renderer.prototype.render = function(options,viewMat,lights,objects) {
-    var shadowZFail=options.shadowZ=="zfail";
+    var shadowZFail=options.shadowZ=="fail";
     var shadowBackface=options.shadowFace=='back';
-    
+
     var gl=this.gl;
     var projMat=this.projMat;
 
@@ -287,17 +301,17 @@ Renderer.prototype.render = function(options,viewMat,lights,objects) {
     gl.viewport(0,0,canvas.width,canvas.height);
     
     //light    
-    mygl.uniform1f(gl,"u_strength",0.25);
-    mygl.uniform4fv(gl,"u_lightViewPos",lights2[0].viewPos);
-    mygl.uniform3fv(gl,"u_lightPos",lights2[0].pos.slice(0,3));
+    mygl.setUniform(gl,gl.uniform1f,"u_strength",0.25);
+    mygl.setUniform(gl,gl.uniform4fv,"u_lightViewPos",lights2[0].viewPos);
+    mygl.setUniform(gl,gl.uniform3fv,"u_lightPos",lights2[0].pos.slice(0,3));
 
     //
-    mygl.uniformMatrix4fv(gl,"u_projMat",false,projMat);
-    mygl.uniformMatrix4fv(gl,"u_viewMat",false,viewMat);
-    mygl.uniformMatrix4fv(gl,"u_viewProjMat",false,viewProjMat);
+    mygl.setUniform(gl,gl.uniformMatrix4fv,"u_projMat",false,projMat);
+    mygl.setUniform(gl,gl.uniformMatrix4fv,"u_viewMat",false,viewMat);
+    mygl.setUniform(gl,gl.uniformMatrix4fv,"u_viewProjMat",false,viewProjMat);
     
     //
-    mygl.uniform1i(gl,"u_useBack",shadowBackface?1:0);
+    mygl.setUniform(gl,gl.uniform1i,"u_useBack",shadowBackface?1:0);
 
     //
     mygl.setDrawStates(gl,false,{
