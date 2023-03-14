@@ -1,6 +1,6 @@
 # WebGL Stencil Shadow Volumes
 
-[Demo](http://andrewhills.github.io/webgl2-stencil-shadow-volumes/demo.html) (requires WebGL2).
+[Demo](http://ahilus.github.io/webgl2-stencil-shadow-volumes/demo.html) (requires WebGL2).
 
 Original idea was from [Mikola Lysneko](https://github.com/stackgl/webgl-workshop/tree/master/exercises/stencil-shadows), and was implemented using the general algorithm described in [GPU Gems 3, chapter 11](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch11.html).
 
